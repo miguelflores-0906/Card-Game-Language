@@ -45,7 +45,7 @@ class Card:
         self.__dict__[__name] = __value
 
 class Pile:
-    def __init__(self, a=None, b=None):
+    def __init__(self, a=None, b=None, mode=None):
         self.__dict__['cards'] = []
         self.__dict__['count'] = 0
         for key, value in basePile.items():
@@ -53,15 +53,21 @@ class Pile:
 
         if a is None:
             return
-        if isinstance(a, int):
-            self.set_cards(b)
-            self.mul(a)
-        elif isinstance(b, int):
-            self.set_cards(a)
-            self.mul(b)
-        else:
-            self.set_cards(a)
-            self.add(b)
+        try:
+            if mode == 'mul':
+                if isinstance(a, int):
+                    self.set_cards(b)
+                    self.mul(a)
+                elif isinstance(b, int):
+                    self.set_cards(a)
+                    self.mul(b)
+                else:
+                    raise Exception()
+            else:
+                self.set_cards(a)
+                self.add(b)
+        except:
+            raise TypeError(f'Incompatible types, {type(a).__name__} and {type(b).__name__}')
 
     def set_cards(self, item):
         if isinstance(item, Card):
@@ -71,7 +77,7 @@ class Pile:
             self.__dict__['cards'] = deepcopy(item.cards)
             self.__dict__['count'] = item.count
         else:
-            raise TypeError('Incompatible type, expected Card or Pile') 
+            raise TypeError('Incompatible type, expected Card or Pile')
                 
     def add(self, o):
         other = Pile(o, 1)
@@ -87,7 +93,7 @@ class Pile:
 
     def __setattr__(self, __name: str, __value: Any) -> None:
         if __name == 'cards' or __name == 'count':
-            raise KeyError(f'Cannot directly modify value of {__name}')
+            raise AttributeError(f'Cannot directly modify value of {__name}')
         
         if __name in self.__dict__.keys():
             old_value = self.__dict__[__name]
@@ -95,13 +101,18 @@ class Pile:
                 raise TypeError(f'Incompatible type, expected {type(old_value).__name__}')
         self.__dict__[__name] = __value
 
-    def __getitem__(self, key):
-        if isinstance(key, int):
-            if key >= self.count:
-                raise KeyError('Index out of bounds')
-            return self.cards[key]
+    def __getattribute__(self, __name: str) -> Any:
+        if __name == 'cards':
+            raise AttributeError('Cannot directly access value of cards')
+        return self.__dict__[__name]
+
+    def __getitem__(self, index):
+        if isinstance(index, int):
+            if index >= self.count:
+                raise IndexError('Index out of bounds')
+            return self.cards[index]
         else:
-            raise TypeError('Key must be an integer')
+            raise TypeError('Index must be an integer')
 
     def insert(self, card):
         self.__dict__['cards'] = [card] + self.cards
@@ -159,9 +170,6 @@ class Player:
             self.__dict__[key] = deepcopy(value)
 
     def __setattr__(self, __name: str, __value: Any) -> None:
-        if __name == 'hand':
-            raise KeyError(f'Cannot directly modify value of {__name}')
-        
         if __name in self.__dict__.keys():
             old_value = self.__dict__[__name]
             if type(old_value) is not type(__value):

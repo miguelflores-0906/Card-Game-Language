@@ -701,5 +701,14 @@ class CardListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by CardParser#action_stack_expr.
+    def enterAction_stack_expr(self, ctx:CardParser.Action_stack_exprContext):
+        pass
+
+    # Exit a parse tree produced by CardParser#action_stack_expr.
+    def exitAction_stack_expr(self, ctx:CardParser.Action_stack_exprContext):
+        pass
+
+
 
 del CardParser

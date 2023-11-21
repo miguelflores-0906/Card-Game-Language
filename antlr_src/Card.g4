@@ -45,10 +45,9 @@ const_stmt: CONST declare_stmt;
 assign_body: ASSIGN_OP expression | ASSIGN_OP OPEN_CB array_body CLOSE_CB |
     ASSIGN_OP OPEN_CB object_body CLOSE_CB | ASSIGN_OP COMBI OPEN_CB object_body CLOSE_CB |
     ASSIGN_OP NEW DATA_TYPE;
-assignee: IDENTIFIER | assignee OPEN_SB expression CLOSE_SB | assignee DOT_OP assignee |
-    ACTION_STACK | OPEN_PAR assignee CLOSE_PAR;
-entity: IDENTIFIER | entity OPEN_SB expression CLOSE_SB | entity DOT_OP entity |
-    ACTION_STACK | function_call | OPEN_PAR entity CLOSE_PAR;
+assignee: IDENTIFIER | assignee OPEN_SB expression CLOSE_SB | assignee DOT_OP IDENTIFIER;
+entity: IDENTIFIER | entity OPEN_SB expression CLOSE_SB | entity DOT_OP IDENTIFIER |
+    function_call | OPEN_PAR entity CLOSE_PAR;
 array_body: expression (COMMA expression)*;
 object_body: object_content (COMMA object_content)*;
 object_content: IDENTIFIER COLON expression | IDENTIFIER COLON OPEN_CB array_body CLOSE_CB | 
@@ -57,7 +56,7 @@ expression: entity | INT | STRING | NULL | OPEN_PAR expression CLOSE_PAR | NOT_O
     expression operator1 expression | expression operator2 expression | 
     expression operator3 expression | expression operator4 expression | 
     expression AND_OP expression | expression OR_OP expression | pick_expr |
-    getint_expr | getstr_expr;
+    getint_expr | getstr_expr | action_stack_expr;
 operator1: MULT_OP | DIV_OP | MOD_OP;
 operator2: ADD_OP | SUB_OP;
 operator3: GT_OP | LT_OP | GEQ_OP | LEQ_OP;
@@ -111,6 +110,7 @@ move_stmt: MOVE entity FROM entity TO entity SEMICOLON;
 play_stmt: entity PLAY entity TO entity SEMICOLON;
 shuffle_stmt: SHUFFLE entity SEMICOLON;
 peek_stmt: PEEK expression FROM entity SEMICOLON;
+action_stack_expr: ACTION_STACK DOT_OP IDENTIFIER OPEN_PAR expression? CLOSE_PAR;
 
 // Special Characters
 OPEN_CB : '{';
