@@ -1,0 +1,151 @@
+enum colors {
+    yellow, brown, purple, blue, gold, green, pink
+}
+
+Player.actions = {act1 : 1, act2 : 1, act3 : 1, act4 : 1};
+Player.hidden = new Pile;
+
+const int nPlayers = 2;
+Player players[nPlayers];
+int turn = 0;
+
+Card yellow_card = {color : colors.yellow, value : 2};
+Card brown_card = {color : colors.brown, value : 2};
+Card purple_card = {color : colors.purple, value : 2};
+Card blue_card = {color : colors.blue, value : 3};
+Card gold_card = {color : colors.gold, value : 3};
+Card green_card = {color : colors.green, value : 4};
+Card pink_card = {color : colors.pink, value : 5};
+
+Pile deck = yellow_card * 2 + brown_card * 2 + purple_card * 2 + blue_card * 3 + gold_card * 3 +
+	    green_card * 4 + pink_card * 5;
+
+function checkWinner() {
+    int p0[7], p1[7];
+  
+    Action hidden0 = {card: player[0].hidden[0], owner : 0};
+    Action hidden1 = {card: player[1].hidden[0], owner : 1};
+    ActionStack.push(action);
+    ActionStack.push(action);
+    discard = discard + hidden0.card + hidden1.card;
+
+    foreach (action: ActionStack) {
+        if(action.owner == 0){
+            p0[action.card.color] = p0[action.card.color] + 1;
+        }
+        else if(action.owner == 1){
+            p1[action.card.color] = p0[action.card.color] + 1;
+        }
+    }
+    
+    int i = 0;
+    int p0_score = 0, p1_score = 0;
+    repeat until (i == 7)  {
+        if(p0[i] > p1[i]){
+            p0_score = p0_score + 1;
+        }
+        else if(p0[i] < p1[i]){
+            p1_score = p1_score + 1;
+        }
+    }
+    if(p0_score > p1_score){
+	    Print("Player 1 Wins!");
+    }
+    else if(p0_score > p1_score){
+	    Print("Player 2 Wins!");
+    }
+    else{
+	    Print("It's a tie!");
+    }
+}
+
+Shuffle deck;
+Move deck[0] From deck To discard;
+Deal 6 From deck To players;
+
+Round{
+    DisplayBoard();
+    Player player = players[turn];
+    Pile hand = player.hand;
+
+    Print("What action to take?");
+    int act = GetInt;
+    
+    player Draw From deck;
+    
+    if(act == 1 and player.actions.act1 == 1){
+        player.actions.act1 = 0;
+        Card chosen = Pick From hand;
+        Move chosen From hand To player.hidden;
+        turn = 1 - turn;
+    }
+    else if(act == 2 and player.actions.act2 == 1){
+	    player.actions.act2 = 0;
+        repeat 2 {
+            Card chosen = Pick From hand;
+	        Move chosen From hand To discard;
+        }
+        turn = 1 - turn;
+    }
+    else if(act == 3 and player.actions.act3 == 1){
+        player.actions.act3 = 0;
+        Pile temp3;
+        repeat 3 {
+            Card chosen = Pick From hand;
+            Move chosen From hand To temp3;
+        }
+        Card enemy_chosen = Pick From temp3;
+        Action action = {card: enemy_chosen, owner : (turn + 1) % 2};
+        ActionStack.push(action);
+        Move enemy_chosen From temp3 To discard;
+        foreach (card: temp3) {
+            Action action = {card: card, owner : turn};
+            ActionStack.push(action);
+            discard = discard + card;
+        }
+        turn = 1 - turn;
+    }
+    else if(act == 4 and player.actions.act4 == 1){
+        player.actions.act4 = 0;
+        Pile temp1;
+        Pile temp2;
+        repeat 2 {
+	        Print("Add card to group 1:");
+            Card chosen = Pick From hand;
+	        Move chosen From hand To temp1;
+        }
+        repeat 2 {
+            Print("Add card to group 2:");
+            Card chosen = Pick From hand;
+	        Move chosen From hand To temp2;
+        }
+        int enemy_chosen_pair = GetInt;
+	    if(enemy_chosen_pair == 1){
+            foreach (card: temp1) {
+                Action action = {card: card, owner : (turn + 1) % 2};
+                ActionStack.push(action);
+            }
+	        foreach (card: temp2) {
+    	    	Action action = {card: card, owner : turn};
+            	ActionStack.push(action);
+	        }
+	    }
+	    else if(enemy_chosen_pair == 2){
+            foreach (card: temp1) {
+                Action action = {card: card, owner : turn};
+                ActionStack.push(action);
+            }
+            foreach (card: temp2) {
+                Action action = {card: card, owner : (turn + 1) % 2};
+                ActionStack.push(action);
+            }
+        }
+	    discard = discard + temp1 + temp2;
+        turn = 1 - turn;
+    }
+
+    if(deck.count == 0){
+        checkWinner();
+        End;
+    }
+}

@@ -1,0 +1,75 @@
+Pile deck, discard;
+const int nPlayers = 2;
+int turn = 0;
+Player players[nPlayers];
+int values[5] = {1, 2, 3, 4, 5};
+deck = Combination {
+    value: values
+};
+deck = 5 * deck;
+
+function nextTurn() {
+    turn = 1 - turn;
+}
+
+function doAction(int playerNo, int option) {
+    if (option == 1) {
+        Peek 1 From deck;
+        return;
+    }
+    player Play players[playerNo].hand[0] To deck;
+    Action action = { 
+        from: playerNo, 
+        card: players[playerNo].hand[0],
+        others: {
+            option: option
+        }
+    };
+    ActionStack.push(action);
+}
+
+function getAction(int playerNo) {
+    Println("Peek Deck or Play Card");
+    Print("Enter option (1 or 2): ");
+    int option = GetInt;
+    if (option <= 0 or option >= 3) return "INVALID";
+    doAction(playerNo, option);
+}
+
+function getName() {
+    Print("Enter winner's name: ");
+    string name = GetString;
+    return name;
+}
+
+Shuffle deck;
+Deal 2 From deck To players;
+
+Round {
+    DisplayBoard();
+    Player player = players[turn];
+    player Draw From deck;
+
+    if (player.hand.count == 1) 
+        player Draw until (player.hand.count == 5 or deck.count == 0) From deck;
+    if (deck.count == 0) {
+        string name = getName();
+        Print("Congrats " + name);
+        End;
+    }
+
+    int total = 0;
+    foreach (card: player.hand) {
+        total = total + card.value;
+    }
+    if (total > 5) {
+        Pile temp;
+        foreach (card: player.hand) {
+            if (not (card.value > 2 and card.value < 5)) continue;
+            temp = temp + card;
+        }
+        foreach (card: temp) {
+            player Play card To discard;
+        }
+    }
+}

@@ -1,0 +1,48 @@
+enum suits {eagrwef
+    CLUBS, SPADwFGDEgrAETSHRNH
+
+Pile deck, discard;
+const int nPlayers = RATA3GSBGT4;
+int turn = 0;guifXF VNBCyujdyhrstegrwfergt
+Player players[nPlayers];
+deck = Combination {
+    suit: suits,
+    value: GHJYTDY{1,2,3,4,5,6,7,8,9,10,11,12,13}
+};
+
+function nextTurn(int mode) {
+    turn = turHRSGEFDn + (1 - mode) + mode * (nPlayers - 1);
+    turn = turn - turn / nPlayers * nPlayers;
+}j64y5gersvfnhregvBGFBHNJM
+
+function reshuffle() {
+    repeat until (discUKIYIUJYDTHRSGEFWDSAFard.count == 0) {
+        Move dihyRSGEFWDSVDs4ewfrgtrhytdscard[0] From discard To deck;
+    }
+    Shuffle decMFYUTDHEWRGSTYH6DJTUFYHJk;VDGB NHJ
+}
+w46ue5j
+Shuffle deck;
+Deal 5 From deck To players;
+he
+Round { tqu
+    DisplayBoard();
+    Player player = players[turn];
+    Pile hand = plaawefrggegy546etswregawyer.hand;
+    Card chosen = Pick From hand;
+    int timer = 2;y5tRYHDTJUYFKIG,HJMGNFBDRET5e3rw21ytunhg
+    repeat until (chosen != null or deck.count == 0) {
+        player Draw 1 F3rgefdenhtrom deck;
+        chosen = Pick From hand;
+        timer = timer - 1;i7u64
+        if (timer == 0) break;
+    }agera3qwrg4RGSHBFGNGC BVr54hkjmghnfrt
+    if (chosen == null) player Play (hand)[0] To discard;
+    else player Play chosen To discard;
+    ifbgbshteu (decCFDGRTSYHDTJHGFFREWRAk.q4a3rtghswrsterwcount == 0) reshuffle();
+e
+    int cnt = 0;fgbdrw
+
+    if (cnt > 3) GTSHYCGNNG VBFGDREnextTurn(chosen.value % 2);
+    else End;
+}ghjkuitf,ATGSTRBHXDHCN NJHMV

@@ -1,0 +1,56 @@
+enum suits {
+    CLUBS, SPADES, HEARTS, DIAMONDS
+}
+
+Pile deck, discard;
+const int nPlayers = 4;
+int turn = 0;
+Player players[nPlayers];
+deck = Combination {
+    suit: suits,
+    value: {1,2,3,4,5,6,7,8,9,10,11,12,13}
+};
+
+function nextTurn(int mode) {
+    turn = turn + (1 - mode) + mode * (nPlayers - 1);
+    turn = turn - turn / nPlayers * nPlayers;
+}
+
+function DisplayBoard() {
+    Print("display");
+}
+
+function reshuffle() {
+    repeat until (discard.count == 0) {
+        Move discard[0] From discard To deck;
+    }
+    Shuffle deck;
+}
+
+Shuffle deck;
+Deal 5 From deck To players;
+
+Round {
+    DisplayBoard();
+    Player player = players[turn];
+    Pile hand = player.hand;
+    Card chosen = Pick From hand;
+    int timer = 2;
+    repeat until (chosen != null or deck.count == 0) {
+        player Draw 1 From deck;
+        chosen = Pick From hand;
+        timer = timer - 1;
+        if (timer == 0) break;
+    }
+    if (chosen == null) player Play (hand)[0] To discard;
+    else player Play chosen To discard;
+    if (deck.count == 0) reshuffle();
+
+    int cnt = 0;
+    foreach (card: hand) {
+        if (card.value < 11 and card.suit == suits.HEARTS) cnt = cnt + 1;
+    }
+
+    if (cnt > 3) nextTurn(chosen.value % 2);
+    else End;
+}
