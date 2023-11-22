@@ -6,7 +6,6 @@ else:
     from CardParser import CardParser
 
 import utils
-
 # global stuff
 symbol_table = {}
 nested_func_cnt = -1
@@ -54,22 +53,51 @@ class CardVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by CardParser#enum_block.
     def visitEnum_block(self, ctx:CardParser.Enum_blockContext):
-        return self.visitChildren(ctx)
+        identifier = self.visit(ctx.getChild(0))
+        enum = self.visit(ctx.getChild(2))
+        self.declareIdentifier(identifier, utils.Enum, enum)
 
 
     # Visit a parse tree produced by CardParser#enum_header.
     def visitEnum_header(self, ctx:CardParser.Enum_headerContext):
-        return self.visitChildren(ctx)
+        return ctx.getChild(1).getText()
 
 
     # Visit a parse tree produced by CardParser#enum_body.
     def visitEnum_body(self, ctx:CardParser.Enum_bodyContext):
-        return self.visitChildren(ctx)
+        enum = {}
+        labels = []
+        for i in range(0, ctx.getChildCount(), 2):
+            labels.append(ctx.getChild(i).getText())
+        if len(set(labels)) != len(labels):
+            self.raiseError(ctx, KeyError, 'Duplicate names found in enum')
+        for i, value in enumerate(labels):
+            enum[value] = i
+        return utils.Enum(enum)
 
 
     # Visit a parse tree produced by CardParser#obj_defn.
     def visitObj_defn(self, ctx:CardParser.Obj_defnContext):
-        return self.visitChildren(ctx)
+        data_type = ctx.getChild(0).getText()
+        if data_type == 'int' or data_type == 'string':
+            self.raiseError(ctx, TypeError, f'Cannot add attributes to {data_type}')
+        identifier = ctx.getChild(2).getText()
+        value = self.visit(ctx.getChild(3))
+
+        try:
+            if data_type == 'Card':
+                utils.addCardAttrib(identifier, value)
+            elif data_type == 'Pile':
+                utils.addPileAttrib(identifier, value)
+            elif data_type == 'Player':
+                utils.addPlayerAttrib(identifier, value)
+            elif data_type == 'Action':
+                utils.addActionAttrib(identifier, value)
+            else: assert(False)
+        except Exception as e:
+            if str(e)[:13] == 'Error on line':
+                raise e
+            self.raiseError(ctx, type(e), str(e))
 
 
     # Visit a parse tree produced by CardParser#round_block.
@@ -109,7 +137,10 @@ class CardVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by CardParser#statement.
     def visitStatement(self, ctx:CardParser.StatementContext):
-        return self.visitChildren(ctx)
+        if ctx.getChildCount() == 3:
+            value = self.visit(ctx.getChild(1))
+            return self.visitAssignee(ctx.getChild(0), value, 'set')
+        return self.visit(ctx.getChild(0))
 
 
     # Visit a parse tree produced by CardParser#setup_stmt.
@@ -144,192 +175,384 @@ class CardVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by CardParser#declare_stmt.
     def visitDeclare_stmt(self, ctx:CardParser.Declare_stmtContext):
-        return self.visitChildren(ctx)
+        data_type = ctx.getChild(0).getText()
+        if data_type == 'int': data_type = int
+        elif data_type == 'string': data_type = str
+        elif data_type == 'Card': data_type = utils.Card
+        elif data_type == 'Pile': data_type = utils.Pile
+        elif data_type == 'Player': data_type = utils.Player
+        elif data_type == 'Action': data_type = utils.Action
+        assert(not isinstance(data_type, str))
+        self.visitDeclare_body(ctx.getChild(1), data_type)
 
 
     # Visit a parse tree produced by CardParser#declare_body.
-    def visitDeclare_body(self, ctx:CardParser.Declare_bodyContext):
-        return self.visitChildren(ctx)
+    def visitDeclare_body(self, ctx:CardParser.Declare_bodyContext, data_type=None):
+        assert(data_type is not None)
+        for i in range(0, ctx.getChildCount(), 2):
+            self.visitDeclare_content(ctx.getChild(i), data_type)
 
 
     # Visit a parse tree produced by CardParser#declare_content.
-    def visitDeclare_content(self, ctx:CardParser.Declare_contentContext):
-        return self.visitChildren(ctx)
+    def visitDeclare_content(self, ctx:CardParser.Declare_contentContext, data_type=None):
+        assert(data_type is not None)
+        try:
+            identifier = ctx.getChild(0).getText()
+            if ctx.getChildCount() == 1:
+                value = None
+                if data_type is int: value = 0
+                elif data_type is str: value = ''
+                else: value = data_type()
+                assert(value is not None)
+                return self.declareIdentifier(identifier, data_type, value)
+            if ctx.getChildCount() == 2:
+                value = self.visit(ctx.getChild(1))
+                if value is None:
+                    if data_type not in [utils.Card, utils.Pile, utils.Player, utils.Action, utils.Object]:
+                        raise TypeError(f'Incompatible type, cannot set {data_type.__name__} to null')
+                    return self.declareIdentifier(identifier, data_type, value)
+                if not isinstance(value, data_type):
+                    raise TypeError(f'Incompatible type, expected {data_type.__name__}')
+                return self.declareIdentifier(identifier, data_type, value)
+            
+            expression = self.visit(ctx.getChild(2))
+            if not isinstance(expression, int):
+                raise TypeError(f'Incompatible type, expected int')
+            if expression < 0:
+                raise IndexError(f'Expected nonnegative int')
+            
+            if ctx.getChildCount() == 4:
+                arr = []
+                for _ in range(expression):
+                    if data_type is int: arr.append(0)
+                    elif data_type is str: arr.append('')
+                    else: arr.append(data_type())
+                return self.declareIdentifier(identifier, data_type, arr)
+            arr = self.visit(ctx.getChild(4))
+            if not isinstance(arr, list): raise TypeError(f'Incompatible type, expected array of type {data_type.__name__}')
+            if expression != len(arr): raise ValueError('Array size mismatch')
+            
+            # might be broken if list is all null but there is an actual mismatch i.e.
+            # Card cards[1] = {null}; Player players[1] = cards;
+            for item in arr:
+                if item is None: continue
+                if not isinstance(item, data_type):
+                    raise TypeError(f'Incompatible type, expected array of type {data_type.__name__}')
+                return self.declareIdentifier(identifier, data_type, arr)
+            if data_type in [int, str]: raise TypeError(f'Incompatible type, expected array of type {data_type.__name__}')
+            return self.declareIdentifier(identifier, data_type, value)
+
+        except Exception as e:
+            if str(e)[:13] == 'Error on line':
+                raise e
+            self.raiseError(ctx, type(e), str(e))
 
 
     # Visit a parse tree produced by CardParser#const_stmt.
     def visitConst_stmt(self, ctx:CardParser.Const_stmtContext):
-        return self.visitChildren(ctx)
+        return self.visit(ctx.getChild(1))
 
 
     # Visit a parse tree produced by CardParser#assign_body.
     def visitAssign_body(self, ctx:CardParser.Assign_bodyContext):
-        return self.visitChildren(ctx)
+        if ctx.getChildCount() == 2:
+            return self.visit(ctx.getChild(1))
+        if ctx.getChildCount() == 3:
+            data_type = ctx.getChild(2).getText()
+            if data_type == 'int' or data_type == 'string':
+                self.raiseError(ctx, TypeError, f'Cannot instatiate type {data_type}')
+            if data_type == 'Card': return utils.Card()
+            if data_type == 'Pile': return utils.Pile()
+            if data_type == 'Player': return utils.Player()
+            if data_type == 'Action': return utils.Action()
+        if ctx.getChildCount() == 4:
+            return self.visit(ctx.getChild(2))
+        try:
+            obj = self.visit(ctx.getChild(3))
+            return obj.combination()
+        except Exception as e:
+            if str(e)[:13] == 'Error on line':
+                raise e
+            self.raiseError(ctx, type(e), str(e))
 
 
     # Visit a parse tree produced by CardParser#assignee.
-    def visitAssignee(self, ctx:CardParser.AssigneeContext):
-        return self.visitChildren(ctx)
+    def visitAssignee(self, ctx:CardParser.AssigneeContext, value=None, mode='get'):
+        try:
+            if ctx.getChildCount() == 1:
+                identifier = ctx.getChild(0).getText()
+                if mode == 'get':
+                    data_type, obj = self.visitIdentifier(identifier)
+                    assert(obj not in [int, str])
+                    return obj
+                return self.assignIdentifier(identifier, value)
+            if ctx.getChildCount() == 3:
+                assignee = self.visitAssignee(ctx.getChild(0))
+                identifier = ctx.getChild(2).getText()
+                if assignee is None: raise AttributeError(f'null has no attribute {identifier}')
+                if mode == 'get':
+                    obj = assignee.__getattribute__(identifier)
+                    assert(type(obj) not in [int, str])
+                    return obj
+                assignee.__setattr__(identifier, value)
+                return
+            
+            assignee = self.visit(ctx.getChild(0))
+            if not isinstance(assignee, list) and not isinstance(assignee, utils.Pile):
+                data_type = 'null' if assignee is None else type(assignee).__name__
+                raise TypeError(f'{data_type} is not subscriptable')
+            index = self.visit(ctx.getChild(2))
+            if isinstance(assignee, utils.Pile):
+                raise AttributeError('Cannot directly modify Card object in Pile')
+            if not isinstance(index, int):
+                raise TypeError('Index must be an integer')
+            if index >= len(assignee):
+                raise IndexError('Index out of bounds')
+            
+            obj = assignee[index]
+            if mode == 'get':
+                assert(type(obj) not in [int, str])
+                return obj
+            if isinstance(obj, list) or isinstance(value, list):
+                raise TypeError('Cannot assign an array')
+            if obj is None:
+                if type(value) in [int, str]:
+                    raise TypeError(f'Incompatible type, expected Card, Pile, Player, Action, or Object')
+                assignee[index] = value
+                return
+            if value is None:
+                if type(obj) in [int, str]:
+                    raise TypeError(f'Incompatible type, expected {type(obj).__name__}')
+                assignee[index] = value
+                return
+            if type(obj) is not type(value):
+                raise TypeError(f'Incompatible type, expected {type(obj).__name__}')
+            assignee[index] = value
+        except Exception as e:
+            if str(e)[:13] == 'Error on line':
+                raise e
+            self.raiseError(ctx, type(e), str(e))
 
 
     # Visit a parse tree produced by CardParser#entity.
     def visitEntity(self, ctx:CardParser.EntityContext):
-        if ctx.getChildCount() == 1:
-            child = ctx.getChild(0)
-            if isinstance(child, CardParser.Function_callContext):
-                return self.visit(child)
+        try:
+            if ctx.getChildCount() == 1:
+                child = ctx.getChild(0)
+                if issubclass(type(child), ParserRuleContext):
+                    return self.visit(child)
 
-            identifier = child.getText()
-            _, value = self.visitIdentifier(identifier)
-            return value
-        
-        if ctx.getChildCount() == 4:
-            entity = self.visit(ctx.getChild(0))
-            if not isinstance(entity, list) and not isinstance(entity, utils.Pile):
-                data_type = 'null' if entity is None else type(entity).__name__
-                raise TypeError(f'{data_type} is not subscriptable')
-            index = self.visit(ctx.getChild(2))
-            if isinstance(entity, utils.Pile):
+                identifier = child.getText()
+                _, value = self.visitIdentifier(identifier)
+                return value
+            
+            if ctx.getChildCount() == 4:
+                entity = self.visit(ctx.getChild(0))
+                if not isinstance(entity, list) and not isinstance(entity, utils.Pile):
+                    data_type = 'null' if entity is None else type(entity).__name__
+                    raise TypeError(f'{data_type} is not subscriptable')
+                index = self.visit(ctx.getChild(2))
+                if isinstance(entity, utils.Pile):
+                    return entity[index]
+                if not isinstance(index, int):
+                    raise TypeError('Index must be an integer')
+                if index >= len(entity):
+                    raise IndexError('Index out of bounds')
                 return entity[index]
-            if not isinstance(index, int):
-                raise TypeError('Index must be an integer')
-            if index >= len(entity):
-                raise IndexError('Index out of bounds')
-            return entity[index]
-        
-        if ctx.getChild(0).getText() == '(':
-            return self.visit(ctx.getChild(1))
-        entity = self.visit(ctx.getChild(0))
-        identifier = ctx.getChild(2).getText()
-        return entity.__getattribute__(identifier)
+            
+            if ctx.getChild(0).getText() == '(':
+                return self.visit(ctx.getChild(1))
+            entity = self.visit(ctx.getChild(0))
+            identifier = ctx.getChild(2).getText()
+            if entity is None: raise AttributeError(f'null has no attribute {identifier}')
+            return entity.__getattribute__(identifier)
+        except Exception as e:
+            if str(e)[:13] == 'Error on line':
+                raise e
+            self.raiseError(ctx, type(e), str(e))
 
 
     # Visit a parse tree produced by CardParser#array_body.
     def visitArray_body(self, ctx:CardParser.Array_bodyContext):
-        return self.visitChildren(ctx)
+        arr = []
+        for i in range(0, ctx.getChildCount(), 2):
+            arr.append(self.visit(ctx.getChild(i)))
+
+        not_null = []
+        for i in range(len(arr)):
+            if arr[i] is not None:
+                not_null.append(arr[i])
+        for i in range(len(not_null)):
+            if type(not_null[i]) is not type(not_null[0]):
+                self.raiseError(ctx, TypeError, 'Array cannot have multiple types')
+        if len(not_null) == 0: return arr
+        if len(not_null) == len(arr): return arr
+        if type(not_null[0]) not in [utils.Card, utils.Pile, utils.Player, utils.Action]:
+            self.raiseError(ctx, TypeError, 'Array cannot have multiple types')
+        return arr
 
 
     # Visit a parse tree produced by CardParser#object_body.
     def visitObject_body(self, ctx:CardParser.Object_bodyContext):
-        return self.visitChildren(ctx)
+        obj = utils.Object()
+        for i in range(0, ctx.getChildCount(), 2):
+            identifier, value = self.visit(ctx.getChild(i))
+            if obj.has(identifier):
+                self.raiseError(ctx, KeyError, 'Duplicate property names found')
+            obj.__setattr__(identifier, value)
+        return obj
 
 
     # Visit a parse tree produced by CardParser#object_content.
     def visitObject_content(self, ctx:CardParser.Object_contentContext):
-        return self.visitChildren(ctx)
+        identifier = ctx.getChild(0).getText()
+        if ctx.getChildCount() == 3:
+            value = self.visit(ctx.getChild(2))
+            return identifier, value
+        value = self.visit(ctx.getChild(3))
+        return identifier, value
 
 
     # Visit a parse tree produced by CardParser#expression.
     def visitExpression(self, ctx:CardParser.ExpressionContext):
-        if ctx.getChildCount() == 3:
-            if ctx.getChild(0).getText() == '(':
-                return self.visit(ctx.getChild(1))
-            if ctx.getChild(1).getText() == 'and':
+        try:
+            if ctx.getChildCount() == 3:
+                if ctx.getChild(0).getText() == '(':
+                    return self.visit(ctx.getChild(1))
+                if ctx.getChild(1).getText() == 'and':
+                    left = self.visit(ctx.getChild(0))
+                    right = self.visit(ctx.getChild(2))
+                    if not isinstance(left, int) or not isinstance(right, int):
+                        raise TypeError('Incompatible type, expected int')
+                    left = left == 1
+                    right = right == 1
+                    return int(left and right)
+                if ctx.getChild(1).getText() == 'or':
+                    left = self.visit(ctx.getChild(0))
+                    right = self.visit(ctx.getChild(2))
+                    if not isinstance(left, int) or not isinstance(right, int):
+                        raise TypeError('Incompatible type, expected int')
+                    left = left == 1
+                    right = right == 1
+                    return int(left or right)
+                
                 left = self.visit(ctx.getChild(0))
                 right = self.visit(ctx.getChild(2))
-                if not isinstance(left, int) or not isinstance(right, int):
-                    raise TypeError('Incompatible type, expected int')
-                left = left == 1
-                right = right == 1
-                return int(left and right)
-            if ctx.getChild(1).getText() == 'or':
-                left = self.visit(ctx.getChild(0))
-                right = self.visit(ctx.getChild(2))
-                if not isinstance(left, int) or not isinstance(right, int):
-                    raise TypeError('Incompatible type, expected int')
-                left = left == 1
-                right = right == 1
-                return int(left or right)
-            
-            left = self.visit(ctx.getChild(0))
-            right = self.visit(ctx.getChild(2))
-            op = self.visit(ctx.getChild(1))
-            if op == '*':
-                if isinstance(left, int) and isinstance(right, int):
-                    return left * right
-                return utils.Pile(left, right, 'mul')
-            if op == '/':
-                if not isinstance(left, int) or not isinstance(right, int):
-                    raise TypeError('Incompatible type, expected int')
-                if right == 0:
-                    raise ZeroDivisionError('Division by zero error')
-                return left // right
-            if op == '%':
-                if not isinstance(left, int) or not isinstance(right, int):
-                    raise TypeError('Incompatible type, expected int')
-                if right == 0:
-                    raise ZeroDivisionError('Modulo by zero error')
-                return left % right
-            if op == '+':
-                if isinstance(left, int) and isinstance(right, int):
-                    return left + right
-                if type(left) in [int, str] and type(right) in [int, str]:
-                    return str(left) + str(right)
-                return utils.Pile(left, right, 'add')
-            if op == '-':
-                if not isinstance(left, int) or not isinstance(right, int):
-                    raise TypeError('Incompatible type, expected int')
-                return left - right
-            if op == '>':
-                if not isinstance(left, int) or not isinstance(right, int):
-                    raise TypeError('Incompatible type, expected int')
-                return int(left > right)
-            if op == '<':
-                if not isinstance(left, int) or not isinstance(right, int):
-                    raise TypeError('Incompatible type, expected int')
-                return int(left < right)
-            if op == '>=':
-                if not isinstance(left, int) or not isinstance(right, int):
-                    raise TypeError('Incompatible type, expected int')
-                return int(left >= right)
-            if op == '<=':
-                if not isinstance(left, int) or not isinstance(right, int):
-                    raise TypeError('Incompatible type, expected int')
-                return int(left <= right)
-            if op == '==':
-                if left is None:
-                    if right is None:
-                        return 1
-                    if isinstance(right, int) or isinstance(right, str):
-                        raise TypeError('Incompatible type')
-                    return 0
-                if right is None:
-                    if isinstance(left, int) or isinstance(left, str):
-                        raise TypeError('Incompatible type')
-                    return 0
-                if type(left) is not type(right):
-                    raise TypeError(f'Incompatible types, {type(left).__name__} and {type(right).__name__}')
-                return int(left == right)
-            if op == '!=':
-                if left is None:
-                    if right is None:
+                op = self.visit(ctx.getChild(1))
+                if op == '*':
+                    if isinstance(left, int) and isinstance(right, int):
+                        return left * right
+                    return utils.Pile(left, right, 'mul')
+                if op == '/':
+                    if not isinstance(left, int) or not isinstance(right, int):
+                        raise TypeError('Incompatible type, expected int')
+                    if right == 0:
+                        raise ZeroDivisionError('Division by zero error')
+                    return left // right
+                if op == '%':
+                    if not isinstance(left, int) or not isinstance(right, int):
+                        raise TypeError('Incompatible type, expected int')
+                    if right == 0:
+                        raise ZeroDivisionError('Modulo by zero error')
+                    return left % right
+                if op == '+':
+                    if isinstance(left, int) and isinstance(right, int):
+                        return left + right
+                    if type(left) in [int, str] and type(right) in [int, str]:
+                        return str(left) + str(right)
+                    return utils.Pile(left, right, 'add')
+                if op == '-':
+                    if not isinstance(left, int) or not isinstance(right, int):
+                        raise TypeError('Incompatible type, expected int')
+                    return left - right
+                if op == '>':
+                    if not isinstance(left, int) or not isinstance(right, int):
+                        raise TypeError('Incompatible type, expected int')
+                    return int(left > right)
+                if op == '<':
+                    if not isinstance(left, int) or not isinstance(right, int):
+                        raise TypeError('Incompatible type, expected int')
+                    return int(left < right)
+                if op == '>=':
+                    if not isinstance(left, int) or not isinstance(right, int):
+                        raise TypeError('Incompatible type, expected int')
+                    return int(left >= right)
+                if op == '<=':
+                    if not isinstance(left, int) or not isinstance(right, int):
+                        raise TypeError('Incompatible type, expected int')
+                    return int(left <= right)
+                if op == '==':
+                    if type(left) is utils.Enum:
+                        raise TypeError('The operation \'==\' is not defined for enum')
+                    if type(left) is CardParser.Function_callContext:
+                        raise TypeError('The operation \'==\' is not defined for function')
+                    if type(left) is list:
+                        raise TypeError('The operation \'==\' is not defined for array')
+                    if type(right) is utils.Enum:
+                        raise TypeError('The operation \'==\' is not defined for enum')
+                    if type(right) is CardParser.Function_callContext:
+                        raise TypeError('The operation \'==\' is not defined for function')
+                    if type(right) is list:
+                        raise TypeError('The operation \'==\' is not defined for array')
+                    if left is None:
+                        if right is None:
+                            return 1
+                        if isinstance(right, int) or isinstance(right, str):
+                            raise TypeError(f'Incompatible types, null and {type(right).__name__}')
                         return 0
-                    if isinstance(right, int) or isinstance(right, str):
-                        raise TypeError('Incompatible type')
-                    return 1
-                if right is None:
-                    if isinstance(left, int) or isinstance(left, str):
-                        raise TypeError('Incompatible type')
-                    return 1
-                if type(left) is not type(right):
-                    raise TypeError(f'Incompatible types, {type(left).__name__} and {type(right).__name__}')
-                return int(left != right)
-        if ctx.getChildCount() == 2:
-            assert(ctx.getChild(0).getText() == 'not')
-            val = self.visit(ctx.getChild(1))
-            if not isinstance(val, int):
-                raise TypeError('Incompatible type, expected int')
-            return int(not bool(val))
-        child = ctx.getChild(0)
-        if issubclass(type(child), ParserRuleContext):
-            return self.visit(child)
+                    if right is None:
+                        if isinstance(left, int) or isinstance(left, str):
+                            raise TypeError(f'Incompatible types, {type(left).__name__} and null')
+                        return 0
+                    if type(left) is not type(right):
+                        raise TypeError(f'Incompatible types, {type(left).__name__} and {type(right).__name__}')
+                    return int(left == right)
+                if op == '!=':
+                    if type(left) is utils.Enum:
+                        raise TypeError('The operation \'!=\' is not defined for enum')
+                    if type(left) is CardParser.Function_callContext:
+                        raise TypeError('The operation \'!=\' is not defined for function')
+                    if type(left) is list:
+                        raise TypeError('The operation \'!=\' is not defined for array')
+                    if type(right) is utils.Enum:
+                        raise TypeError('The operation \'!=\' is not defined for enum')
+                    if type(right) is CardParser.Function_callContext:
+                        raise TypeError('The operation \'!=\' is not defined for function')
+                    if type(right) is list:
+                        raise TypeError('The operation \'!=\' is not defined for array')
+                    if left is None:
+                        if right is None:
+                            return 0
+                        if isinstance(right, int) or isinstance(right, str):
+                            raise TypeError(f'Incompatible types, null and {type(right).__name__}')
+                        return 1
+                    if right is None:
+                        if isinstance(left, int) or isinstance(left, str):
+                            raise TypeError(f'Incompatible types, {type(left).__name__} and null')
+                        return 1
+                    if type(left) is not type(right):
+                        raise TypeError(f'Incompatible types, {type(left).__name__} and {type(right).__name__}')
+                    return int(left != right)
+            if ctx.getChildCount() == 2:
+                assert(ctx.getChild(0).getText() == 'not')
+                val = self.visit(ctx.getChild(1))
+                if not isinstance(val, int):
+                    raise TypeError('Incompatible type, expected int')
+                return int(not bool(val))
+            child = ctx.getChild(0)
+            if issubclass(type(child), ParserRuleContext):
+                return self.visit(child)
 
-        value = child.getText()
-        if value[0] == '"':
-            return value[1:-1]
-        if value == 'null':
-            return None
-        return int(value)
+            value = child.getText()
+            if value[0] == '"':
+                return value[1:-1]
+            if value == 'null':
+                return None
+            return int(value)
+        except Exception as e:
+            if str(e)[:13] == 'Error on line':
+                raise e
+            self.raiseError(ctx, type(e), str(e))
 
 
     # Visit a parse tree produced by CardParser#operator1.
@@ -561,24 +784,33 @@ class CardVisitor(ParseTreeVisitor):
     def assignIdentifier(self, identifier:str, value):
         if nested_func_cnt >= 0:
             if identifier in func_table_list[nested_func_cnt].keys():
-                data_type, _ = func_table_list[nested_func_cnt][identifier]
+                data_type, old_value = func_table_list[nested_func_cnt][identifier]
                 if value is None:
-                    if data_type not in [utils.Card, utils.Pile, utils.Player, utils.Action, dict]:
+                    if data_type not in [utils.Card, utils.Pile, utils.Player, utils.Action, utils.Object]:
                         raise TypeError(f'Incompatible type, expected {data_type.__name__}')
+                elif isinstance(old_value, list):
+                    raise TypeError('Cannot assign an array')
                 elif not isinstance(value, data_type):
                     raise TypeError(f'Incompatible type, expected {data_type.__name__}')
                 func_table_list[nested_func_cnt][identifier] = (data_type, value)
                 return
-
         if identifier in symbol_table.keys():
-            data_type, _ = symbol_table[identifier]
+            data_type, old_value = symbol_table[identifier]
+            if data_type in [utils.Enum, ParserRuleContext]:
+                raise ValueError(f'Cannot modify value of {identifier}')
             if value is None:
-                if data_type not in [utils.Card, utils.Pile, utils.Player, utils.Action, dict]:
+                if data_type not in [utils.Card, utils.Pile, utils.Player, utils.Action, utils.Object]:
                     raise TypeError(f'Incompatible type, expected {data_type.__name__}')
+            elif isinstance(old_value, list):
+                raise TypeError('Cannot assign an array')
             elif not isinstance(value, data_type):
                 raise TypeError(f'Incompatible type, expected {data_type.__name__}')
             symbol_table[identifier] = (data_type, value)
             return
         raise NameError(f'Name {identifier} is not defined')
+    
+    def raiseError(self, ctx, error_type, error_msg):
+        line = ctx.start.line
+        raise error_type(f'Error on line {line}: {error_msg}')
 
 del CardParser

@@ -4,10 +4,10 @@
         function_block
         function_header
         formal_params
-        enum_block
-        enum_header
-        enum_body
-        obj_defn
+done    enum_block
+done    enum_header
+done    enum_body
+done    obj_defn
         round_block 
         setup_code_block 
         func_code_block 
@@ -16,23 +16,23 @@
         round_loop_code_block 
         loop_code_block 
 
-        statement 
+done    statement 
         setup_stmt
         func_stmt
         func_loop_stmt
         round_stmt
         round_loop_stmt
         loop_stmt
-        declare_stmt
-        declare_body
-        declare_content
-        const_stmt
-        assign_body
-        assignee
+done    declare_stmt
+done    declare_body
+done    declare_content
+done    const_stmt
+done    assign_body
+done    assignee
 done    entity
-        array_body
-        object_body
-        object_content
+done    array_body
+done    object_body
+done    object_content
 done    expression
 done    operator1
 done    operator2

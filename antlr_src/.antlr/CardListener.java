@@ -776,4 +776,14 @@ public interface CardListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitPeek_stmt(CardParser.Peek_stmtContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link CardParser#action_stack_expr}.
+	 * @param ctx the parse tree
+	 */
+	void enterAction_stack_expr(CardParser.Action_stack_exprContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link CardParser#action_stack_expr}.
+	 * @param ctx the parse tree
+	 */
+	void exitAction_stack_expr(CardParser.Action_stack_exprContext ctx);
 }

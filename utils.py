@@ -1,12 +1,14 @@
 import random
 from copy import deepcopy
 from typing import Any
+import itertools
 
 baseCard = {}
 basePile = {}
 basePlayer = {}
 baseAction = {}
 
+# might need to check these attribs later if they have been defined previously
 def addCardAttrib(key, value):
     baseCard[key] = value
 
@@ -40,6 +42,12 @@ class Card:
     def __setattr__(self, __name: str, __value: Any) -> None:
         if __name in self.__dict__.keys():
             old_value = self.__dict__[__name]
+            if old_value is None:
+                if __value is not None and type(__value) not in [Card, Pile, Player, Action, Object]:
+                    raise TypeError(f'Incompatible type, expected Card, Pile, Player, Action, or Object')
+            elif __value is None:
+                if type(old_value) not in [Card, Pile, Player, Action, Object]:
+                    raise TypeError(f'Incompatible type, expected {type(old_value).__name__}')
             if type(old_value) is not type(__value):
                 raise TypeError(f'Incompatible type, expected {type(old_value).__name__}')
         self.__dict__[__name] = __value
@@ -74,20 +82,20 @@ class Pile:
             self.__dict__['cards'] = [deepcopy(item)]
             self.__dict__['count'] = 1
         elif isinstance(item, Pile):
-            self.__dict__['cards'] = deepcopy(item.cards)
+            self.__dict__['cards'] = deepcopy(item.__dict__['cards'])
             self.__dict__['count'] = item.count
         else:
             raise TypeError('Incompatible type, expected Card or Pile')
                 
     def add(self, o):
-        other = Pile(o, 1)
-        self.__dict__['cards'].extend(deepcopy(other.cards))
+        other = Pile(o, 1, 'mul')
+        self.__dict__['cards'].extend(deepcopy(other.__dict__['cards']))
         self.__dict__['count'] += other.count
 
     def mul(self, val):
         cards = []
         for _ in range(val):
-            cards.extend(deepcopy(self.cards))
+            cards.extend(deepcopy(self.__dict__['cards']))
         self.__dict__['cards'] = cards
         self.__dict__['count'] *= val
 
@@ -97,6 +105,12 @@ class Pile:
         
         if __name in self.__dict__.keys():
             old_value = self.__dict__[__name]
+            if old_value is None:
+                if __value is not None and type(__value) not in [Card, Pile, Player, Action, Object]:
+                    raise TypeError(f'Incompatible type, expected Card, Pile, Player, Action, or Object')
+            elif __value is None:
+                if type(old_value) not in [Card, Pile, Player, Action, Object]:
+                    raise TypeError(f'Incompatible type, expected {type(old_value).__name__}')
             if type(old_value) is not type(__value):
                 raise TypeError(f'Incompatible type, expected {type(old_value).__name__}')
         self.__dict__[__name] = __value
@@ -104,18 +118,18 @@ class Pile:
     def __getattribute__(self, __name: str) -> Any:
         if __name == 'cards':
             raise AttributeError('Cannot directly access value of cards')
-        return self.__dict__[__name]
+        return object.__getattribute__(self, __name)
 
     def __getitem__(self, index):
         if isinstance(index, int):
             if index >= self.count:
                 raise IndexError('Index out of bounds')
-            return self.cards[index]
+            return self.__dict__['cards'][index]
         else:
             raise TypeError('Index must be an integer')
 
     def insert(self, card):
-        self.__dict__['cards'] = [card] + self.cards
+        self.__dict__['cards'] = [card] + self.__dict__['cards']
         self.__dict__['count'] = self.count + 1
 
     def deal(self, val, players):
@@ -130,14 +144,14 @@ class Pile:
         if self.count == 0:
             raise MemoryError('Underflow, no cards left in pile')
         card = self[idx]
-        self.__dict__['cards'] = self.cards[0:idx] + self.cards[idx + 1:]
+        self.__dict__['cards'] = self.__dict__['cards'][0:idx] + self.__dict__['cards'][idx + 1:]
         self.__dict__['count'] = self.count - 1
         return card
 
     def move(self, card, other):
         idx = -1
         for i in range(self.count):
-            if self.cards[i] == card:
+            if self.__dict__['cards'][i] == card:
                 idx = i
                 break
         if idx == -1:
@@ -146,20 +160,20 @@ class Pile:
         other.insert(card)
            
     def shuffle(self):
-        random.shuffle(self.cards)
+        random.shuffle(self.__dict__['cards'])
 
     def peek(self, val):
         if self.count < val:
             raise MemoryError('Underflow, not enough cards in pile')
         for i in range(val):
-            self.cards[i].display()
+            self.__dict__['cards'][i].display()
 
     def pick(self):
         try:
             idx = int(input())
             if idx >= self.count:
                 raise
-            return self.cards[idx]
+            return self.__dict__['cards'][idx]
         except:
             return None
 
@@ -172,7 +186,13 @@ class Player:
     def __setattr__(self, __name: str, __value: Any) -> None:
         if __name in self.__dict__.keys():
             old_value = self.__dict__[__name]
-            if type(old_value) is not type(__value):
+            if old_value is None:
+                if __value is not None and type(__value) not in [Card, Pile, Player, Action, Object]:
+                    raise TypeError(f'Incompatible type, expected Card, Pile, Player, Action, or Object')
+            elif __value is None:
+                if type(old_value) not in [Card, Pile, Player, Action, Object]:
+                    raise TypeError(f'Incompatible type, expected {type(old_value).__name__}')
+            elif type(old_value) is not type(__value):
                 raise TypeError(f'Incompatible type, expected {type(old_value).__name__}')
         self.__dict__[__name] = __value
 
@@ -190,6 +210,12 @@ class Action:
     def __setattr__(self, __name: str, __value: Any) -> None:
         if __name in self.__dict__.keys():
             old_value = self.__dict__[__name]
+            if old_value is None:
+                if __value is not None and type(__value) not in [Card, Pile, Player, Action, Object]:
+                    raise TypeError(f'Incompatible type, expected Card, Pile, Player, Action, or Object')
+            elif __value is None:
+                if type(old_value) not in [Card, Pile, Player, Action, Object]:
+                    raise TypeError(f'Incompatible type, expected {type(old_value).__name__}')
             if type(old_value) is not type(__value):
                 raise TypeError(f'Incompatible type, expected {type(old_value).__name__}')
         self.__dict__[__name] = __value
@@ -214,3 +240,53 @@ def GetInt():
 
 def GetString():
     return input()
+
+class Enum:
+    def __init__(self, obj) -> None:
+        for key, value in obj.items():
+            self.__dict__[key] = deepcopy(value)
+    
+    def toList(self):
+        arr = []
+        for _, value in self.__dict__.items():
+            arr.append(value)
+        return arr
+
+class Object:
+    def __setattr__(self, __name: str, __value: Any) -> None:
+        if __name in self.__dict__.keys():
+            old_value = self.__dict__[__name]
+            if old_value is None:
+                if __value is not None and type(__value) not in [Card, Pile, Player, Action, Object]:
+                    raise TypeError(f'Incompatible type, expected Card, Pile, Player, Action, or Object')
+            elif __value is None:
+                if type(old_value) not in [Card, Pile, Player, Action, Object]:
+                    raise TypeError(f'Incompatible type, expected {type(old_value).__name__}')
+            if type(old_value) is not type(__value):
+                raise TypeError(f'Incompatible type, expected {type(old_value).__name__}')
+        self.__dict__[__name] = __value
+
+    def has(self, __name: str):
+        return __name in self.__dict__.keys()
+    
+    def combination(self):
+        names = []
+        vals = []
+
+        for key, value in self.__dict__.items():
+            names.append(key)
+            if isinstance(value, list):
+                vals.append(value)
+            elif isinstance(value, Enum):
+                vals.append(value.toList())
+            else:
+                raise TypeError('Incompatible type, expected array or enum')
+        
+        product = itertools.product(*vals)
+        pile = Pile()
+        for item in product:
+            obj = {}
+            for i in range(len(names)):
+                obj[names[i]] = item[i]
+            pile.add(Card(obj))
+        return pile

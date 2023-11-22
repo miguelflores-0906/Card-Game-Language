@@ -935,6 +935,18 @@ public class CardBaseListener implements CardListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitPeek_stmt(CardParser.Peek_stmtContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterAction_stack_expr(CardParser.Action_stack_exprContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitAction_stack_expr(CardParser.Action_stack_exprContext ctx) { }
 
 	/**
 	 * {@inheritDoc}
