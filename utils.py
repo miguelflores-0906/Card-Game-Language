@@ -290,3 +290,4 @@ class Object:
                 obj[names[i]] = item[i]
             pile.add(Card(obj))
         return pile
+    

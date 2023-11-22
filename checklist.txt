@@ -8,21 +8,21 @@ done    enum_block
 done    enum_header
 done    enum_body
 done    obj_defn
-        round_block 
-        setup_code_block 
-        func_code_block 
-        func_loop_code_block 
-        round_code_block 
-        round_loop_code_block 
-        loop_code_block 
+done    round_block 
+done    setup_code_block 
+done    func_code_block 
+done    func_loop_code_block 
+done    round_code_block 
+done    round_loop_code_block 
+done    loop_code_block
 
 done    statement 
-        setup_stmt
-        func_stmt
-        func_loop_stmt
-        round_stmt
-        round_loop_stmt
-        loop_stmt
+done    setup_stmt
+done    func_stmt
+done    func_loop_stmt
+done    round_stmt
+done    round_loop_stmt
+done    loop_stmt
 done    declare_stmt
 done    declare_body
 done    declare_content
@@ -41,31 +41,31 @@ done    operator4
         function_call
         actual_params
 
-        if_stmt
-        if_header
-        foreach_stmt
-        foreach_header
+done    if_stmt
+done    if_header
+done    foreach_stmt
+done    foreach_header
         repeat_stmt
         repeat_header
-        loop_if_stmt
-        func_if_stmt
-        func_foreach_stmt
+done    loop_if_stmt
+done    func_if_stmt
+done    func_foreach_stmt
         func_repeat_stmt
-        func_loop_if_stmt
-        round_if_stmt
-        round_foreach_stmt
+done    func_loop_if_stmt
+done    round_if_stmt
+done    round_foreach_stmt
         round_repeat_stmt
-        round_loop_if_stmt
-        block_stmt
-        func_block_stmt
-        func_loop_block_stmt
-        round_block_stmt
-        round_loop_block_stmt
-        loop_block_stmt
-        break_stmt
-        continue_stmt
-        return_stmt
-        end_stmt
+done    round_loop_if_stmt
+done    block_stmt
+done    func_block_stmt
+done    func_loop_block_stmt
+done    round_block_stmt
+done    round_loop_block_stmt
+done    loop_block_stmt
+done    break_stmt
+done    continue_stmt
+done    return_stmt
+done    end_stmt
 
         pick_expr
         getint_expr
