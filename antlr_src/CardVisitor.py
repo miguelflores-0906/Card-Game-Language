@@ -104,6 +104,8 @@ class CardVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by CardParser#round_block.
     def visitRound_block(self, ctx:CardParser.Round_blockContext):
+        # idea is to add nested_func_cnt for this
+        # treat each iteration as a function
         return self.visitChildren(ctx)
 
 
@@ -626,10 +628,16 @@ class CardVisitor(ParseTreeVisitor):
     # Visit a parse tree produced by CardParser#foreach_stmt.
     def visitForeach_stmt(self, ctx:CardParser.Foreach_stmtContext):
         identifier, data = self.visit(ctx.getChild(0))
+        data_type = utils.Card
+        if isinstance(data, list): # hopefully list is not full of just null
+            for item in data:
+                if item is None: continue
+                data_type = type(item)
+                break
         loop_variables.append(None)
         nested_loop_cnt += 1
         for item in data:
-            loop_variables[nested_loop_cnt] = (identifier, item)
+            loop_variables[nested_loop_cnt] = (identifier, (data_type, item))
             check = self.visit(ctx.getChild(1))
             if check is None: continue
             if check[0] == 'break': break
@@ -651,12 +659,35 @@ class CardVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by CardParser#repeat_stmt.
     def visitRepeat_stmt(self, ctx:CardParser.Repeat_stmtContext):
-        return self.visitChildren(ctx)
+        loop_type, value = self.visit(ctx.getChild(0))
+        if loop_type == 'count':
+            if value <= 0: return
+            for _ in range(value):
+                check = self.visit(ctx.getChild(1))
+                if check is None: continue
+                if check[0] == 'break': return
+            return
+        
+        assert(loop_type == 'logic')
+        while value == 0:
+            check = self.visit(ctx.getChild(1))
+            if check is not None and check[0] == 'break': return
+            _, value = self.visit(ctx.getChild(0))
 
 
     # Visit a parse tree produced by CardParser#repeat_header.
     def visitRepeat_header(self, ctx:CardParser.Repeat_headerContext):
-        return self.visitChildren(ctx)
+        if ctx.getChildCount() == 2:
+            count = self.visit(ctx.getChild(1))
+            if not isinstance(count, int):
+                self.raiseError(ctx, TypeError, f'Incompatible type, expected int as loop count')
+            return ('count', count)
+        
+        value = self.visit(ctx.getChild(2))
+        if not isinstance(value, int):
+            data_type = 'null' if value is None else type(value).__name__
+            self.raiseError(ctx, TypeError, f'Cannot evaluate truth value of type {data_type}')
+        return ('logic', value)
 
 
     # Visit a parse tree produced by CardParser#loop_if_stmt.
@@ -680,10 +711,16 @@ class CardVisitor(ParseTreeVisitor):
     # Visit a parse tree produced by CardParser#func_foreach_stmt.
     def visitFunc_foreach_stmt(self, ctx:CardParser.Func_foreach_stmtContext):
         identifier, data = self.visit(ctx.getChild(0))
+        data_type = utils.Card
+        if isinstance(data, list): # hopefully list is not full of just null
+            for item in data:
+                if item is None: continue
+                data_type = type(item)
+                break
         loop_variables.append(None)
         nested_loop_cnt += 1
         for item in data:
-            loop_variables[nested_loop_cnt] = (identifier, item)
+            loop_variables[nested_loop_cnt] = (identifier, (data_type, item))
             check = self.visit(ctx.getChild(1))
             if check is None: continue
             if check[0] == 'break': break
@@ -697,7 +734,23 @@ class CardVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by CardParser#func_repeat_stmt.
     def visitFunc_repeat_stmt(self, ctx:CardParser.Func_repeat_stmtContext):
-        return self.visitChildren(ctx)
+        loop_type, value = self.visit(ctx.getChild(0))
+        if loop_type == 'count':
+            if value <= 0: return
+            for _ in range(value):
+                check = self.visit(ctx.getChild(1))
+                if check is None: continue
+                if check[0] == 'break': return
+                if check[0] == 'return': return check
+            return
+        
+        assert(loop_type == 'logic')
+        while value == 0:
+            check = self.visit(ctx.getChild(1))
+            if check is not None:
+                if check[0] == 'break': return
+                if check[0] == 'return': return check
+            _, value = self.visit(ctx.getChild(0))
 
 
     # Visit a parse tree produced by CardParser#func_loop_if_stmt.
@@ -721,10 +774,16 @@ class CardVisitor(ParseTreeVisitor):
     # Visit a parse tree produced by CardParser#round_foreach_stmt.
     def visitRound_foreach_stmt(self, ctx:CardParser.Round_foreach_stmtContext):
         identifier, data = self.visit(ctx.getChild(0))
+        data_type = utils.Card
+        if isinstance(data, list): # hopefully list is not full of just null
+            for item in data:
+                if item is None: continue
+                data_type = type(item)
+                break
         loop_variables.append(None)
         nested_loop_cnt += 1
         for item in data:
-            loop_variables[nested_loop_cnt] = (identifier, item)
+            loop_variables[nested_loop_cnt] = (identifier, (data_type, item))
             check = self.visit(ctx.getChild(1))
             if check is None: continue
             if check[0] == 'break': break
@@ -738,7 +797,23 @@ class CardVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by CardParser#round_repeat_stmt.
     def visitRound_repeat_stmt(self, ctx:CardParser.Round_repeat_stmtContext):
-        return self.visitChildren(ctx)
+        loop_type, value = self.visit(ctx.getChild(0))
+        if loop_type == 'count':
+            if value <= 0: return
+            for _ in range(value):
+                check = self.visit(ctx.getChild(1))
+                if check is None: continue
+                if check[0] == 'break': return
+                if check[0] == 'End': return check
+            return
+        
+        assert(loop_type == 'logic')
+        while value == 0:
+            check = self.visit(ctx.getChild(1))
+            if check is not None:
+                if check[0] == 'break': return
+                if check[0] == 'End': return check
+            _, value = self.visit(ctx.getChild(0))
 
 
     # Visit a parse tree produced by CardParser#round_loop_if_stmt.
@@ -826,56 +901,184 @@ class CardVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by CardParser#pick_expr.
     def visitPick_expr(self, ctx:CardParser.Pick_exprContext):
-        return self.visitChildren(ctx)
+        entity = self.visit(ctx.getChild(2))
+        if isinstance(entity, utils.Pile):
+            return entity.pick()
+        if not isinstance(entity, list):
+            data_type = 'null' if entity is None else type(entity).__name__
+            self.raiseError(ctx, TypeError, f'Cannot pick from object of type {data_type}')
+        try:
+            idx = int(input())
+            if idx >= len(entity): raise
+            return entity[idx]
+        except:
+            return None
 
 
     # Visit a parse tree produced by CardParser#getint_expr.
     def visitGetint_expr(self, ctx:CardParser.Getint_exprContext):
-        return self.visitChildren(ctx)
+        try:
+            return utils.GetInt()
+        except Exception as e:
+            self.raiseError(ctx, type(e), str(e))
 
 
     # Visit a parse tree produced by CardParser#getstr_expr.
     def visitGetstr_expr(self, ctx:CardParser.Getstr_exprContext):
-        return self.visitChildren(ctx)
+        return utils.GetString()
 
 
     # Visit a parse tree produced by CardParser#print_stmt.
     def visitPrint_stmt(self, ctx:CardParser.Print_stmtContext):
-        return self.visitChildren(ctx)
+        print_type = ctx.getChild(0).getText()
+        output = self.visit(ctx.getChild(2))
+        if type(output) not in [int, str]:
+            data_type = 'null' if output is None else type(output).__name__
+            self.raiseError(ctx, TypeError, f'Cannot print object of type {data_type}')
+
+        if print_type == 'Print':
+            print(output, end='')
+        else:
+            assert print_type == 'Println'
+            print(output)
 
 
     # Visit a parse tree produced by CardParser#deal_stmt.
     def visitDeal_stmt(self, ctx:CardParser.Deal_stmtContext):
-        return self.visitChildren(ctx)
+        count = self.visit(ctx.getChild(1))
+        entity1 = self.visit(ctx.getChild(3))
+        entity2 = self.visit(ctx.getChild(5))
+
+        try:
+            if not isinstance(count, int):
+                raise TypeError('Incompatible type, expected deal count of type int')
+            if not isinstance(entity1, utils.Pile):
+                raise TypeError('Incompatible type, expected to deal from Pile')
+            if type(entity2) not in [utils.Player, list]:
+                raise TypeError('Incompatible type, expected to deal to Player or Player array')
+            if isinstance(entity2, list):
+                for item in entity2:
+                    if item is None:
+                        raise ValueError('Array must not contain null')
+                    elif not isinstance(item, utils.Player):
+                        raise TypeError('Incompatible type, expected to deal to Player or Player array')
+                entity1.deal(count, entity2)
+                return
+            entity1.deal(count, [entity2])
+        except Exception as e:
+            self.raiseError(ctx, type(e), str(e))
 
 
     # Visit a parse tree produced by CardParser#draw_stmt.
     def visitDraw_stmt(self, ctx:CardParser.Draw_stmtContext):
-        return self.visitChildren(ctx)
+        # entity DRAW (UNTIL? expression)? FROM entity SEMICOLON;
+        player = self.visit(ctx.getChild(0))
+        if not isinstance(player, utils.Player):
+            self.raiseError(ctx, TypeError, 'Incompatible type, expected Player to draw')
+        
+        if ctx.getChildCount() == 5:
+            pile = self.visit(ctx.getChild(3))
+            if not isinstance(pile, utils.Pile):
+                self.raiseError(ctx, TypeError, 'Incompatible type, expected to draw from Pile')
+            try: player.draw(pile)
+            except Exception as e: self.raiseError(ctx, type(e), str(e))
+            return
+        if ctx.getChildCount() == 6:
+            count = self.visit(ctx.getChild(2))
+            pile = self.visit(ctx.getChild(4))
+            if not isinstance(count, int):
+                raise TypeError('Incompatible type, expected draw count of type int')
+            if not isinstance(pile, utils.Pile):
+                raise TypeError('Incompatible type, expected to draw from Pile')
+            try: player.draw(pile, count)
+            except Exception as e: self.raiseError(ctx, type(e), str(e))
+            return
+        pile = self.visit(ctx.getChild(5))
+        if not isinstance(pile, utils.Pile):
+            self.raiseError(ctx, TypeError, 'Incompatible type, expected to draw from Pile')
+        while True: # pretest loop
+            expression = self.visit(ctx.getChild(3))
+            if not isinstance(expression, int):
+                data_type = 'null' if expression is None else type(expression).__name__
+                self.raiseError(ctx, TypeError, f'Cannot evaluate truth value of type {data_type}')
+            if expression == 0: break
+            try: player.draw(pile)
+            except Exception as e: self.raiseError(ctx, type(e), str(e))
 
 
     # Visit a parse tree produced by CardParser#move_stmt.
     def visitMove_stmt(self, ctx:CardParser.Move_stmtContext):
-        return self.visitChildren(ctx)
+        card = self.visit(ctx.getChild(1))
+        pile1 = self.visit(ctx.getChild(3))
+        pile2 = self.visit(ctx.getChild(5))
+
+        if not isinstance(card, utils.Card):
+            self.raiseError(ctx, TypeError, 'Incompatible type, expected to move Card')
+        if not isinstance(pile1, utils.Pile):
+            self.raiseError(ctx, TypeError, 'Incompatible type, expected to move from Pile')
+        if not isinstance(pile2, utils.Pile):
+            self.raiseError(ctx, TypeError, 'Incompatible type, expected to move to Pile')
+        
+        try: pile1.move(card, pile2)
+        except Exception as e: self.raiseError(ctx, type(e), str(e))
 
 
     # Visit a parse tree produced by CardParser#play_stmt.
     def visitPlay_stmt(self, ctx:CardParser.Play_stmtContext):
-        return self.visitChildren(ctx)
+        player = self.visit(ctx.getChild(0))
+        card = self.visit(ctx.getChild(2))
+        pile = self.visit(ctx.getChild(4))
+
+        if not isinstance(player, utils.Player):
+            self.raiseError(ctx, TypeError, 'Incompatible type, expected Player to play')
+        if not isinstance(card, utils.Card):
+            self.raiseError(ctx, TypeError, 'Incompatible type, expected to play Card')
+        if not isinstance(pile, utils.Pile):
+            self.raiseError(ctx, TypeError, 'Incompatible type, expected to play to Pile')
+
+        try: player.play(card, pile)
+        except Exception as e: self.raiseError(ctx, type(e), str(e))
 
 
     # Visit a parse tree produced by CardParser#shuffle_stmt.
     def visitShuffle_stmt(self, ctx:CardParser.Shuffle_stmtContext):
-        return self.visitChildren(ctx)
+        pile = self.visit(ctx.getChild(1))
+        if not isinstance(pile, utils.Pile):
+            self.raiseError(ctx, TypeError, 'Incompatible type, can only shuffle Pile')
+        pile.shuffle()
 
 
     # Visit a parse tree produced by CardParser#peek_stmt.
     def visitPeek_stmt(self, ctx:CardParser.Peek_stmtContext):
-        return self.visitChildren(ctx)
+        count = self.visit(ctx.getChild(1))
+        pile = self.visit(ctx.getChild(3))
+
+        if not isinstance(count, int):
+            self.raiseError(ctx, TypeError, 'Incompatible type, expected peek count of type int')
+        if not isinstance(pile, utils.Pile):
+            self.raiseError(ctx, TypeError, 'Incompatible type, expected to peek from pile')
+
+        try: pile.peek(count)
+        except Exception as e: self.raiseError(ctx, type(e), str(e))
     
+
     # Visit a parse tree produced by CardParser#action_stack_expr.
     def visitAction_stack_expr(self, ctx:CardParser.Action_stack_exprContext):
-        return self.visitChildren(ctx)
+        identifier = ctx.getChild(2).getText()
+        if identifier == 'push':
+            if ctx.getChildCount() == 5:
+                self.raiseError(ctx, ValueError, 'Attribute push requires an argument')
+            expression = self.visit(ctx.getChild(4))
+            try: utils.push(expression)
+            except Exception as e: self.raiseError(ctx, type(e), str(e))
+        elif identifier == 'pop':
+            if ctx.getChildCount() == 6:
+                self.raiseError(ctx, ValueError, 'Expected 0 arguments, got 1')
+            try: return utils.pop()
+            except Exception as e: self.raiseError(ctx, type(e), str(e))
+        else:
+            self.raiseError(ctx, AttributeError, f'ActionStack has no attribute {identifier}')
+    
     
     def visitIdentifier(self, identifier:str):
         if nested_loop_cnt >= 0:

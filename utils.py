@@ -133,6 +133,8 @@ class Pile:
         self.__dict__['count'] = self.count + 1
 
     def deal(self, val, players):
+        if val <= 0:
+            raise ValueError('Deal count must be greater than 0')
         if self.count < val * len(players):
             raise MemoryError('Underflow, not enough cards in pile')
         for _ in range(val):
@@ -171,8 +173,7 @@ class Pile:
     def pick(self):
         try:
             idx = int(input())
-            if idx >= self.count:
-                raise
+            if idx >= self.count: raise
             return self.__dict__['cards'][idx]
         except:
             return None
@@ -196,8 +197,14 @@ class Player:
                 raise TypeError(f'Incompatible type, expected {type(old_value).__name__}')
         self.__dict__[__name] = __value
 
-    def play(self, card, pile):
+    def play(self, card: Card, pile: Pile):
         self.hand.move(card, pile)
+
+    def draw(self, pile: Pile, count=1):
+        if count <= 0:
+            raise ValueError('Draw count must be greater than 0')
+        for _ in range(count):
+            self.hand.insert(pile.draw())
 
 class Action:
     def __init__(self, obj) -> None:
