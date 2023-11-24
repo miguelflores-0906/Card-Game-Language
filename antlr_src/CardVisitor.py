@@ -127,8 +127,8 @@ class CardVisitor(ParseTreeVisitor):
             labels.append(ctx.getChild(i).getText())
         if len(set(labels)) != len(labels):
             self.raiseError(ctx, KeyError, 'Duplicate names found in enum')
-        for i, value in enumerate(labels):
-            enum[value] = i
+        for value in labels:
+            enum[value] = value
         return utils.Enum(enum)
 
 
