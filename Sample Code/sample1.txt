@@ -34,6 +34,10 @@ Round {
     DisplayBoard();
     Player player = players[turn];
     Pile hand = player.hand;
+    int i = 0;
+    foreach (card: hand) {
+        Print(i);
+    }
     Card chosen = Pick From hand;
     int timer = 2;
     repeat until (chosen != null or deck.count == 0) {

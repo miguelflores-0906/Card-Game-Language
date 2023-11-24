@@ -1,14 +1,14 @@
-        program
-        setup_block
-        setup_content
-        function_block
-        function_header
-        formal_params
+done    program
+done    setup_block
+done    setup_content
+done    function_block
+done    function_header
+done    formal_params
 done    enum_block
 done    enum_header
 done    enum_body
 done    obj_defn
-        round_block 
+done    round_block 
 done    setup_code_block 
 done    func_code_block 
 done    func_loop_code_block 
@@ -38,8 +38,8 @@ done    operator1
 done    operator2
 done    operator3
 done    operator4
-        function_call
-        actual_params
+done    function_call
+done    actual_params
 
 done    if_stmt
 done    if_header
