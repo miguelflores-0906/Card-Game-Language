@@ -707,13 +707,15 @@ class CardVisitor(ParseTreeVisitor):
                 if item is None: continue
                 data_type = type(item)
                 break
-        loop_variables.append(None)
+        loop_variables.append({})
         global nested_loop_cnt
         nested_loop_cnt += 1
         for item in data:
-            loop_variables[nested_loop_cnt] = (identifier, (data_type, item))
+            loop_variables[nested_loop_cnt] = {}
+            loop_variables[nested_loop_cnt][identifier] = (data_type, item)
             check = self.visit(ctx.getChild(1))
             if check is None: continue
+            if not isinstance(check, tuple): continue
             if check[0] == 'break': break
         nested_loop_cnt -= 1
         loop_variables.pop()
@@ -736,17 +738,32 @@ class CardVisitor(ParseTreeVisitor):
         loop_type, value = self.visit(ctx.getChild(0))
         if loop_type == 'count':
             if value <= 0: return
+
+            loop_variables.append({})
+            global nested_loop_cnt
+            nested_loop_cnt += 1
             for _ in range(value):
+                loop_variables[nested_loop_cnt] = {}
                 check = self.visit(ctx.getChild(1))
                 if check is None: continue
-                if check[0] == 'break': return
+                if not isinstance(check, tuple): continue
+                if check[0] == 'break': break
+            nested_loop_cnt -= 1
+            loop_variables.pop()
             return
         
         assert loop_type == 'logic'
+        loop_variables.append({})
+        global nested_loop_cnt
+        nested_loop_cnt += 1
         while value == 0:
+            loop_variables[nested_loop_cnt] = {}
             check = self.visit(ctx.getChild(1))
-            if check is not None and check[0] == 'break': return
+            if not isinstance(check, tuple): continue
+            if check is not None and check[0] == 'break': break
             _, value = self.visit(ctx.getChild(0))
+        nested_loop_cnt -= 1
+        loop_variables.pop()
 
 
     # Visit a parse tree produced by CardParser#repeat_header.
@@ -791,13 +808,15 @@ class CardVisitor(ParseTreeVisitor):
                 if item is None: continue
                 data_type = type(item)
                 break
-        loop_variables.append(None)
+        loop_variables.append({})
         global nested_loop_cnt
         nested_loop_cnt += 1
         for item in data:
-            loop_variables[nested_loop_cnt] = (identifier, (data_type, item))
+            loop_variables[nested_loop_cnt] = {}
+            loop_variables[nested_loop_cnt][identifier] = (data_type, item)
             check = self.visit(ctx.getChild(1))
             if check is None: continue
+            if not isinstance(check, tuple): continue
             if check[0] == 'break': break
             if check[0] == 'return':
                 nested_loop_cnt -= 1
@@ -812,20 +831,41 @@ class CardVisitor(ParseTreeVisitor):
         loop_type, value = self.visit(ctx.getChild(0))
         if loop_type == 'count':
             if value <= 0: return
+
+            loop_variables.append({})
+            global nested_loop_cnt
+            nested_loop_cnt += 1
             for _ in range(value):
+                loop_variables[nested_loop_cnt] = {}
                 check = self.visit(ctx.getChild(1))
                 if check is None: continue
-                if check[0] == 'break': return
-                if check[0] == 'return': return check
+                if not isinstance(check, tuple): continue
+                if check[0] == 'break': break
+                if check[0] == 'return':
+                    nested_loop_cnt -= 1
+                    loop_variables.pop()
+                    return check
+            nested_loop_cnt -= 1
+            loop_variables.pop()
             return
         
         assert loop_type == 'logic'
+        loop_variables.append({})
+        global nested_loop_cnt
+        nested_loop_cnt += 1
         while value == 0:
+            loop_variables[nested_loop_cnt] = {}
             check = self.visit(ctx.getChild(1))
+            if not isinstance(check, tuple): continue
             if check is not None:
-                if check[0] == 'break': return
-                if check[0] == 'return': return check
+                if check[0] == 'break': break
+                if check[0] == 'return':
+                    nested_loop_cnt -= 1
+                    loop_variables.pop()
+                    return check
             _, value = self.visit(ctx.getChild(0))
+        nested_loop_cnt -= 1
+        loop_variables.pop()
 
 
     # Visit a parse tree produced by CardParser#func_loop_if_stmt.
@@ -855,13 +895,15 @@ class CardVisitor(ParseTreeVisitor):
                 if item is None: continue
                 data_type = type(item)
                 break
-        loop_variables.append(None)
+        loop_variables.append({})
         global nested_loop_cnt
         nested_loop_cnt += 1
         for item in data:
-            loop_variables[nested_loop_cnt] = (identifier, (data_type, item))
+            loop_variables[nested_loop_cnt] = {}
+            loop_variables[nested_loop_cnt][identifier] = (data_type, item)
             check = self.visit(ctx.getChild(1))
             if check is None: continue
+            if not isinstance(check, tuple): continue
             if check[0] == 'break': break
             if check[0] == 'End':
                 nested_loop_cnt -= 1
@@ -876,20 +918,41 @@ class CardVisitor(ParseTreeVisitor):
         loop_type, value = self.visit(ctx.getChild(0))
         if loop_type == 'count':
             if value <= 0: return
+
+            loop_variables.append({})
+            global nested_loop_cnt
+            nested_loop_cnt += 1
             for _ in range(value):
+                loop_variables[nested_loop_cnt] = {}
                 check = self.visit(ctx.getChild(1))
                 if check is None: continue
-                if check[0] == 'break': return
-                if check[0] == 'End': return check
+                if not isinstance(check, tuple): continue
+                if check[0] == 'break': break
+                if check[0] == 'End':
+                    nested_loop_cnt -= 1
+                    loop_variables.pop()
+                    return check
+            nested_loop_cnt -= 1
+            loop_variables.pop()
             return
         
         assert loop_type == 'logic'
+        loop_variables.append({})
+        global nested_loop_cnt
+        nested_loop_cnt += 1
         while value == 0:
+            loop_variables[nested_loop_cnt] = {}
             check = self.visit(ctx.getChild(1))
+            if not isinstance(check, tuple): continue
             if check is not None:
-                if check[0] == 'break': return
-                if check[0] == 'End': return check
+                if check[0] == 'break': break
+                if check[0] == 'End':
+                    nested_loop_cnt -= 1
+                    loop_variables.pop()
+                    return check
             _, value = self.visit(ctx.getChild(0))
+        nested_loop_cnt -= 1
+        loop_variables.pop()
 
 
     # Visit a parse tree produced by CardParser#round_loop_if_stmt.
@@ -1181,8 +1244,8 @@ class CardVisitor(ParseTreeVisitor):
     def visitIdentifier(self, identifier:str):
         if nested_loop_cnt >= 0:
             for i in range(nested_loop_cnt, -1, -1):
-                if identifier == loop_variables[i][0]:
-                    return loop_variables[i][1]
+                if identifier in loop_variables[i].keys():
+                    return loop_variables[i][identifier]
         if nested_func_cnt >= 0:
             if identifier in func_table_list[nested_func_cnt].keys():
                 return func_table_list[nested_func_cnt][identifier]
@@ -1191,7 +1254,11 @@ class CardVisitor(ParseTreeVisitor):
         raise NameError(f'Name {identifier} is not defined')
 
     def declareIdentifier(self, identifier:str, data_type, value):
-        if nested_func_cnt >= 0:
+        if nested_loop_cnt >= 0:
+            if identifier in loop_variables[nested_loop_cnt].keys():
+                raise NameError(f'Name {identifier} was already declared')
+            loop_variables[nested_loop_cnt][identifier] = (data_type, value)
+        elif nested_func_cnt >= 0:
             if identifier in func_table_list[nested_func_cnt].keys():
                 raise NameError(f'Name {identifier} was already declared')
             func_table_list[nested_func_cnt][identifier] = (data_type, value)
@@ -1201,6 +1268,19 @@ class CardVisitor(ParseTreeVisitor):
             symbol_table[identifier] = (data_type, value)
 
     def assignIdentifier(self, identifier:str, value):
+        if nested_loop_cnt >= 0:
+            for i in range(nested_loop_cnt, -1, -1):
+                if identifier in loop_variables[i].keys():
+                    data_type, old_value = loop_variables[i][identifier]
+                    if value is None:
+                        if data_type not in [utils.Card, utils.Pile, utils.Player, utils.Action, utils.Object]:
+                            raise TypeError(f'Incompatible type, expected {data_type.__name__}')
+                    elif isinstance(old_value, list):
+                        raise TypeError('Cannot assign an array')
+                    elif not isinstance(value, data_type):
+                        raise TypeError(f'Incompatible type, expected {data_type.__name__}')
+                    loop_variables[i][identifier] = (data_type, value)
+                    return
         if nested_func_cnt >= 0:
             if identifier in func_table_list[nested_func_cnt].keys():
                 data_type, old_value = func_table_list[nested_func_cnt][identifier]

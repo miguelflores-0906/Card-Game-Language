@@ -87,10 +87,15 @@ class Pile:
         else:
             raise TypeError('Incompatible type, expected Card or Pile')
                 
-    def add(self, o):
-        other = Pile(o, 1, 'mul')
-        self.__dict__['cards'].extend(deepcopy(other.__dict__['cards']))
-        self.__dict__['count'] += other.count
+    def add(self, other): # add keeps the references
+        if isinstance(other, Card):
+            other.__dict__['cards'].append(other)
+            self.__dict__['count'] += 1
+        elif isinstance(other, Pile):
+            self.__dict__['cards'].extend(other.__dict__['cards'])
+            self.__dict__['count'] += other.count
+        else:
+            raise TypeError('Incompatible type, expected Card or Pile')
 
     def mul(self, val):
         cards = []
