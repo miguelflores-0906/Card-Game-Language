@@ -260,15 +260,6 @@ class CardListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by CardParser#const_stmt.
-    def enterConst_stmt(self, ctx:CardParser.Const_stmtContext):
-        pass
-
-    # Exit a parse tree produced by CardParser#const_stmt.
-    def exitConst_stmt(self, ctx:CardParser.Const_stmtContext):
-        pass
-
-
     # Enter a parse tree produced by CardParser#assign_body.
     def enterAssign_body(self, ctx:CardParser.Assign_bodyContext):
         pass

@@ -346,11 +346,6 @@ class CardVisitor(ParseTreeVisitor):
             self.raiseError(ctx, type(e), str(e))
 
 
-    # Visit a parse tree produced by CardParser#const_stmt.
-    def visitConst_stmt(self, ctx:CardParser.Const_stmtContext):
-        return self.visit(ctx.getChild(1))
-
-
     # Visit a parse tree produced by CardParser#assign_body.
     def visitAssign_body(self, ctx:CardParser.Assign_bodyContext):
         if ctx.getChildCount() == 2:

@@ -24,7 +24,7 @@ round_loop_code_block: round_loop_stmt+;
 loop_code_block: loop_stmt+;
 
 // Statements
-statement: declare_stmt | const_stmt | assignee assign_body SEMICOLON |
+statement: declare_stmt  | assignee assign_body SEMICOLON |
     expression SEMICOLON | deal_stmt | draw_stmt | move_stmt | 
     play_stmt | shuffle_stmt | peek_stmt | print_stmt;
 
@@ -41,7 +41,6 @@ declare_stmt: DATA_TYPE declare_body SEMICOLON;
 declare_body: declare_content (COMMA declare_content)*;
 declare_content: IDENTIFIER | IDENTIFIER OPEN_SB expression CLOSE_SB | 
     IDENTIFIER assign_body | IDENTIFIER OPEN_SB expression CLOSE_SB assign_body;
-const_stmt: CONST declare_stmt;
 assign_body: ASSIGN_OP expression | ASSIGN_OP OPEN_CB array_body CLOSE_CB |
     ASSIGN_OP OPEN_CB object_body CLOSE_CB | ASSIGN_OP COMBI OPEN_CB object_body CLOSE_CB |
     ASSIGN_OP NEW DATA_TYPE;
@@ -156,7 +155,6 @@ REPEAT : 'repeat';
 UNTIL : 'until';
 BREAK: 'break';
 CONTINUE: 'continue';
-CONST: 'const';
 NEW: 'new';
 FUNC: 'function';
 RETURN: 'return';
