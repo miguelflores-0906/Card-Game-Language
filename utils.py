@@ -280,6 +280,9 @@ class Object:
                 raise TypeError(f'Incompatible type, expected {type(old_value).__name__}')
         self.__dict__[__name] = __value
 
+    def items(self):
+        return self.__dict__.items()
+
     def has(self, __name: str):
         return __name in self.__dict__.keys()
     
