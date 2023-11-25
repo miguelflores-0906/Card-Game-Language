@@ -64,32 +64,34 @@ class Pile:
         try:
             if mode == 'mul':
                 if isinstance(a, int):
-                    self.set_cards(b)
+                    self.set_cards(b, mode)
                     self.mul(a)
                 elif isinstance(b, int):
-                    self.set_cards(a)
+                    self.set_cards(a, mode)
                     self.mul(b)
                 else:
                     raise Exception()
             else:
-                self.set_cards(a)
+                self.set_cards(a, mode)
                 self.add(b)
         except:
             raise TypeError(f'Incompatible types, {type(a).__name__} and {type(b).__name__}')
 
-    def set_cards(self, item):
+    def set_cards(self, item, mode):
         if isinstance(item, Card):
-            self.__dict__['cards'] = [deepcopy(item)]
+            if mode == 'mul': self.__dict__['cards'] = [deepcopy(item)]
+            else: self.__dict__['cards'] = [item]
             self.__dict__['count'] = 1
         elif isinstance(item, Pile):
-            self.__dict__['cards'] = deepcopy(item.__dict__['cards'])
+            if mode == 'mult': self.__dict__['cards'] = deepcopy(item.__dict__['cards'])
+            else: self.__dict__['cards'] = item.__dict__['cards']
             self.__dict__['count'] = item.count
         else:
             raise TypeError('Incompatible type, expected Card or Pile')
                 
     def add(self, other): # add keeps the references
         if isinstance(other, Card):
-            other.__dict__['cards'].append(other)
+            self.__dict__['cards'].append(other)
             self.__dict__['count'] += 1
         elif isinstance(other, Pile):
             self.__dict__['cards'].extend(other.__dict__['cards'])

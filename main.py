@@ -11,7 +11,7 @@ def main(argv):
     parser = CardParser(stream)
     tree = parser.start_()
     if parser.getNumberOfSyntaxErrors() > 0:
-        print("syntax errors")
+        pass
     else:
         try:
             vinterp = CardVisitor()
