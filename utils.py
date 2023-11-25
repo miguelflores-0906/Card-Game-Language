@@ -182,7 +182,7 @@ class Pile:
             idx = int(input())
             if idx >= self.count: raise
             return self.__dict__['cards'][idx]
-        except:
+        except Exception:
             return None
 
 class Player:
@@ -249,7 +249,7 @@ def pop():
 def GetInt():
     try:
         return int(input())
-    except:
+    except Exception:
         raise ValueError('Incompatible type, expected int input')
 
 def GetString():

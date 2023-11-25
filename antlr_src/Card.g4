@@ -125,7 +125,7 @@ COMMA: ',';
 // Types, Objects, and Literals
 DATA_TYPE : 'int' | 'string' | 'Card' | 'Player' | 'Pile' | 'Action';
 INT : '-'?[0-9]+;
-STRING : '"' (~["])+ '"';
+STRING : '"' (~["])* '"';
 ACTION_STACK: 'ActionStack';
 NULL: 'null';
 

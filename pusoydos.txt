@@ -9,6 +9,7 @@ enum suits {
     CLUBS, SPADES, HEARTS, DIAMONDS
 }
 string values[13] = {"3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A", "2"};
+Player.lastMove = new Pile;
 
 Pile deck, discard;
 int nPlayers = 4;
@@ -39,19 +40,30 @@ function DisplayBoard() {
     Println("Turn of Player " + (turn + 1));
     int i = 0;
     repeat (nPlayers) {
-        if (turn != i) Println("Player " + (i + 1) + " has " + players[i].hand.count + " cards.");
+        if (turn != i) {
+            Println("");
+            Println("Player " + (i + 1) + " has " + players[i].hand.count + " cards.");
+            if (players[i].lastMove == null) Println("Player " + (i + 1) + " passed last turn.");
+            else if (players[i].lastMove.count == 0) Println("Player " + (i + 1) + " has not moved yet.");
+            else {
+                Println("Previous move of player " + (i + 1) + ":");
+                foreach (card: players[i].lastMove) {
+                    Println(card.value + " of " + card.suit);
+                }
+            }
+        }
         i = i + 1;
     }
     
     if (prevMove.count > 0) {
-        Println(" ");
-        Println("Last move by Player " + (controlPlayer + 1));
+        Println("");
+        Println("Last move by Player " + (controlPlayer + 1) + ":");
         foreach (card: prevMove) {
             Println(card.value + " of " + card.suit);
         }
     }
 
-    Println(" ");
+    Println("");
     Println("Your Cards:");
     i = 0;
     foreach (card: players[turn].hand) {
@@ -226,7 +238,7 @@ function getInput() {
         prevMove = null;
         Pile currMove;
         repeat until currMove.count == x {
-            Println(" ");
+            Println("");
             Println("Input " + x + " space-separated card indices:");
             repeat x {
                 Card card = Pick From players[turn].hand;
@@ -249,7 +261,7 @@ function getInput() {
     Pile currMove;
     int x = prevMove.count;
     repeat until currMove.count == x {
-        Println(" ");
+        Println("");
         Println("Input " + x + " space-separated card indices: ");
         repeat x {
             Card card = Pick From players[turn].hand;
@@ -267,6 +279,7 @@ Round {
 
     // get input
     Pile currMove = getInput();
+    players[turn].lastMove = currMove;
 
     // pass
     if (currMove == null) {

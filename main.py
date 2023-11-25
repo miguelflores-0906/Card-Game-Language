@@ -16,6 +16,10 @@ def main(argv):
         try:
             vinterp = CardVisitor()
             vinterp.visit(tree)
+        except KeyboardInterrupt:
+            print('\nInterrupted!')
+            print('Closing program...')
+            sys.exit(0)
         except Exception as e:
             print(str(e))
 
