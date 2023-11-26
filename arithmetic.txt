@@ -1,0 +1,39 @@
+int x;
+
+// 
+Round {
+    Println("Addition");
+    int sum = 6 + 9;
+    Println("6 + 9 = " + sum);
+    Println("");
+
+    Println("Multiplication");
+    int product = sum * sum;
+    Println(sum + " * " + sum + " = " + product);
+    Println("");
+
+    Println("Division");
+    int quotient = product / sum;
+    Println(product + " / " + sum + " = " + quotient);
+    Println("");
+
+    Println("Subtraction");
+    int diff = quotient - 9;
+    Println(quotient + " - 9 = " + diff);
+    Println("");
+
+    Println("Precedence & Associativity");
+    int pemdas = 6 * 9 / 3 + 2;
+    Println("6 * 9 / 3 + 2 = " + pemdas);
+
+    int pemdas2 = (6 + 9)/(3 + 2);
+    Println("(6 + 9)/(3 + 2) = " + pemdas2);
+    Println("");
+
+    Println("Modulo");
+    int modulo = 4 % 2;
+    Println("4 % 2 = " + modulo);
+    Println("");
+
+    End;
+}
