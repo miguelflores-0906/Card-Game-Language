@@ -107,6 +107,13 @@ Round {
     Println("");
 
     Println("--------------------");
+    Card a, b;
+    a = b;
+    Pile m, n;
+
+    Println(a == b);
+    Println(m != n);
+    Println(a >= b);
 
     End;
 }
