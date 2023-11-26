@@ -1,0 +1,112 @@
+int x = 6;
+int y = 9;
+int z;
+
+// 
+Round {
+    Println("x = " + x);
+    Println("y = " + y);
+
+    Println("--------------------");
+    Println("Logical");
+    Println("--------------------");
+
+    Println("if (x and y)");
+    if (x and y) Println("True");
+    Println("");
+
+    Println("if (x or y)");
+    if (x or y) Println("True");
+    Println("");
+
+    x = 0;
+    Println("x = 0");
+    Println("");
+
+    Println("if (x and y)");
+    if (x and y) Println("True"); else Println("False");
+    Println("");
+
+    Println("if (x or y)");
+    if (x or y) Println("True");
+    Println("");
+
+    Println("if (not(x and y))");
+    if (not(x and y)) Println("True");
+    else Println("False");
+    Println("");
+
+    Println("if (not x and y)");
+    if (not x and y) Println("True");
+    else Println("False");
+    Println("");
+
+    Println("if (not (x or y))");
+    if (not (x or y)) Println("True");
+    else Println("False");
+    Println("");
+    
+    Println("if (not x or y)");
+    if (not x or y) Println("True");
+    else Println("False");
+    Println("");
+    
+    Println("if (1)");
+    if (1) Println("True");
+    Println("--------------------");
+
+
+    Println("");
+    Println("");
+    
+    Println("x = " + x);
+    Println("y = " + y);
+
+    Println("--------------------");
+    Println("Relational");
+    Println("--------------------");
+    
+    Println("==");
+    Println(x == x);
+    Println(x == y);
+    Println("");
+
+    Println("!=");
+    Println(x == x);
+    Println(x != y);
+    Println("");
+
+    
+    Println("==");
+    Println(x == x);
+    Println(x == y);
+    Println("");
+
+    Println(">=");
+    Println(x >= x);
+    Println(x >= y);
+    Println(y >= x);
+    Println("");
+
+    Println("<=");
+    Println(x <= x);
+    Println(x <= y);
+    Println(y <= x);
+    Println("");
+
+    Println(">");
+    Println(x > x);
+    Println(x > y);
+    Println(y > x);
+    Println("");
+
+    Println("<");
+    Println(x < x);
+    Println(x < y);
+    Println(y < x);
+    Println("");
+
+    Println("--------------------");
+
+    End;
+}
