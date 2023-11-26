@@ -1,0 +1,32 @@
+int x = 6;
+int y = 9;
+int z;
+
+// 
+Round {
+    if (x and y) Println("True");
+
+    if (x or y) Println("True");
+
+    x = 0;
+
+    if (x and y) Println("True"); else Println("False");
+
+    if (x or y) Println("True");
+
+    if (not(x and y)) Println("True");
+    else Println("False");
+
+    if (not x and y) Println("True");
+    else Println("False");
+
+    if (not (x or y)) Println("True");
+    else Println("False");
+    
+    if (not x or y) Println("True");
+    else Println("False");
+    
+    if (1) Println("True");
+
+    End;
+}
