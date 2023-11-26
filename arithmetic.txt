@@ -35,5 +35,13 @@ Round {
     Println("4 % 2 = " + modulo);
     Println("");
 
+    Println("Card Operations");
+    Pile a, b;
+    Card c, d;
+    a = a + c;
+    b = (a + d) * 5;
+    Println(a.count);
+    Println(b.count);
+
     End;
 }
