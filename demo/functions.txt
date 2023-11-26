@@ -1,0 +1,63 @@
+function factorial(int x) {
+    if (x == 0) return 1;
+    return factorial(x - 1) * x;
+}
+
+function oddFactorial(int x) {
+    return x * evenFactorial(x - 1);
+}
+
+function evenFactorial(int x) {
+    if (x == 0) return 1;
+    return x * oddFactorial(x - 1);
+}
+
+function f1() {
+    int x = 3;
+    Println("In f1");
+    Println(x); // x is visible here
+    f2();
+}
+
+function f2() {
+    Println("In f2");
+    // Println(x); // x is not visible here - should show error
+}
+
+function stack1() {
+    Println("Enter stack1");
+    stack2();
+    Println("Exit stack1");
+}
+
+function stack2() {
+    Println("Enter stack2");
+    stack3();
+    Println("Exit stack2");
+}
+
+function stack3() {
+    Println("Enter stack3");
+    stack4();
+    Println("Exit stack3");
+}
+
+function stack4() {
+    Println("Enter stack4");
+    stack5();
+    Println("Exit stack4");
+}
+
+function stack5() {
+    Println("Enter stack5");
+    Println("Exit stack5");
+}
+
+Round {
+    Println(factorial(5)); // recursive function - should print 120
+    Println(oddFactorial(5)); // alternating recursive function - should print 120
+    stack1(); // testing stacking function calls
+    f1();
+    Println(x); // x is not visible here - should show error
+    End;
+}

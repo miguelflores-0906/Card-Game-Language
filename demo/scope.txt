@@ -1,0 +1,25 @@
+string x = "global";
+
+Round {
+    Println(x); // global
+    
+    string x = "in round";
+    Println(x); // in round
+
+    repeat (1) {
+        string x = "in repeat";
+        Println(x); // in repeat;
+        if (1) {
+            string x = "in if";
+            Println(x); // in if
+        }
+        if (1) {
+            string x = "second if";
+            Println(x); // second if
+        }
+        Println(x); // in repeat
+    }
+    Println(x); // in round
+
+    End;
+}

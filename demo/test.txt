@@ -1,0 +1,76 @@
+enum suits {
+    CLUBS, SPADES, HEARTS, DIAMONDS
+}
+
+int values[13] = {2,3,4,5,6,7,8,9,10,10,10,10,11};
+Pile deck, discard;
+
+Player players[6];
+int player1Score;
+int player2Score;
+int player3Score;
+int player4Score;
+
+deck = Combination {
+    suit: suits,
+    value: values
+};
+
+Round {
+    Shuffle deck;
+
+    int i = 1;
+    repeat until (i == 5) {
+        players[i] Draw 1 From deck;
+        i = i + 1;
+        if (i==4) {
+            break;
+        }
+    }
+
+    int j = 1;
+    repeat until (j == 4) {
+        Println("Value of j: " + j);
+        players[j] Draw 1 From deck;
+        j = j + 1;
+        if (j==2) {
+            continue;
+        }
+    }
+
+    Println("Player 1 cards:");
+    foreach (card: players[1].hand) {
+        Println(card.value + " of " + card.suit);
+        player1Score = card.value + player1Score;
+    }
+    Println("Player 1 score: "+player1Score);
+    Println(" ");
+
+    Println("Player 2 cards:");
+    foreach (card: players[2].hand) {
+        Println(card.value + " of " + card.suit);
+        player2Score = card.value + player2Score;
+    }
+    Println("Player 1 score: "+player1Score);
+    Println(" ");
+
+    int n = 0;
+    repeat 3 {
+        if (n==2) {
+            break;
+        }
+        Println("Break Step: "+n);
+        n = n + 1;
+    }
+
+    int m = 0;
+    repeat 3 {
+        if (m==1) {
+            continue;
+        }
+        Println("Continue Step: "+m);
+        m = m + 1;
+    }
+
+    End;
+}

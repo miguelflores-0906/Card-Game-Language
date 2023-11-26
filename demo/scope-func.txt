@@ -1,0 +1,31 @@
+string x = "global";
+
+function f1() {
+    Println(x); // global
+    
+    string x = "in f1";
+    Println(x); // in f1
+
+    repeat (1) {
+        string x = "in repeat";
+        Println(x); // in repeat;
+        if (1) {
+            string x = "in if";
+            Println(x); // in if
+        }
+        f2();
+    }
+    Println(x); // in f1
+}
+
+function f2() {
+    Println(x); // global
+    
+    string x = "in f2";
+    Println(x); // in f2
+}
+
+Round {
+    f1();
+    End;
+}

@@ -725,18 +725,17 @@ class CardVisitor(ParseTreeVisitor):
                 if item is None: continue
                 data_type = type(item)
                 break
-        control_variables.append({})
+        
         global nested_control_cnt
-        nested_control_cnt += 1
         for item in data:
-            control_variables[nested_control_cnt] = {}
-            control_variables[nested_control_cnt][identifier] = (data_type, item)
+            control_variables.append({ identifier: (data_type, item) })
+            nested_control_cnt += 1
             check = self.visit(ctx.getChild(1))
+            nested_control_cnt -= 1
+            control_variables.pop()
             if check is None: continue
             if not isinstance(check, tuple): continue
             if check[0] == 'break': break
-        nested_control_cnt -= 1
-        control_variables.pop()
 
 
     # Visit a parse tree produced by CardParser#foreach_header.
@@ -771,16 +770,16 @@ class CardVisitor(ParseTreeVisitor):
             return
         
         assert loop_type == 'logic'
-        control_variables.append({})
-        nested_control_cnt += 1
         while value == 0:
-            control_variables[nested_control_cnt] = {}
+            control_variables.append({})
+            nested_control_cnt += 1
             check = self.visit(ctx.getChild(1))
+            nested_control_cnt -= 1
+            control_variables.pop()
+            
+            _, value = self.visit(ctx.getChild(0))
             if not isinstance(check, tuple): continue
             if check is not None and check[0] == 'break': break
-            _, value = self.visit(ctx.getChild(0))
-        nested_control_cnt -= 1
-        control_variables.pop()
 
 
     # Visit a parse tree produced by CardParser#repeat_header.
@@ -848,22 +847,16 @@ class CardVisitor(ParseTreeVisitor):
                 break
 
         assert nested_func_cnt >= 0
-        func_control_list[nested_func_cnt].append({})
-        func_nested_control_cnt[nested_func_cnt] += 1
         for item in data:
-            idx = func_nested_control_cnt[nested_func_cnt]
-            func_control_list[nested_func_cnt][idx] = {}
-            func_control_list[nested_func_cnt][nested_control_cnt][identifier] = (data_type, item)
+            func_control_list[nested_func_cnt].append({ identifier: (data_type, item) })
+            func_nested_control_cnt[nested_func_cnt] += 1
             check = self.visit(ctx.getChild(1))
+            func_nested_control_cnt[nested_func_cnt] -= 1
+            func_control_list[nested_func_cnt].pop()
             if check is None: continue
             if not isinstance(check, tuple): continue
             if check[0] == 'break': break
-            if check[0] == 'return':
-                func_nested_control_cnt[nested_func_cnt] -= 1
-                func_control_list[nested_func_cnt].pop()
-                return check
-        func_nested_control_cnt[nested_func_cnt] -= 1
-        func_control_list[nested_func_cnt].pop()
+            if check[0] == 'return': return check
 
 
     # Visit a parse tree produced by CardParser#func_repeat_stmt.
@@ -892,22 +885,17 @@ class CardVisitor(ParseTreeVisitor):
         
         assert loop_type == 'logic'
         assert nested_func_cnt >= 0
-        func_control_list[nested_func_cnt].append({})
-        func_nested_control_cnt[nested_func_cnt] += 1
         while value == 0:
-            idx = func_nested_control_cnt[nested_func_cnt]
-            func_control_list[nested_func_cnt][idx] = {}
+            func_control_list[nested_func_cnt].append({})
+            func_nested_control_cnt[nested_func_cnt] += 1
             check = self.visit(ctx.getChild(1))
-            if not isinstance(check, tuple): continue
-            if check is not None:
-                if check[0] == 'break': break
-                if check[0] == 'return':
-                    func_nested_control_cnt[nested_func_cnt] -= 1
-                    func_control_list[nested_func_cnt].pop()
-                    return check
+            func_nested_control_cnt[nested_func_cnt] -= 1
+            func_control_list[nested_func_cnt].pop()
+            
             _, value = self.visit(ctx.getChild(0))
-        func_nested_control_cnt[nested_func_cnt] -= 1
-        func_control_list[nested_func_cnt].pop()
+            if not isinstance(check, tuple): continue
+            if check[0] == 'break': break
+            if check[0] == 'return': return check
 
 
     # Visit a parse tree produced by CardParser#func_loop_if_stmt.
@@ -959,22 +947,16 @@ class CardVisitor(ParseTreeVisitor):
                 break
 
         assert nested_func_cnt >= 0
-        func_control_list[nested_func_cnt].append({})
-        func_nested_control_cnt[nested_func_cnt] += 1
         for item in data:
-            idx = func_nested_control_cnt[nested_func_cnt]
-            func_control_list[nested_func_cnt][idx] = {}
-            func_control_list[nested_func_cnt][nested_control_cnt][identifier] = (data_type, item)
+            func_control_list[nested_func_cnt].append({ identifier: (data_type, item) })
+            func_nested_control_cnt[nested_func_cnt] += 1
             check = self.visit(ctx.getChild(1))
+            func_nested_control_cnt[nested_func_cnt] -= 1
+            func_control_list[nested_func_cnt].pop()
             if check is None: continue
             if not isinstance(check, tuple): continue
             if check[0] == 'break': break
-            if check[0] == 'End':
-                func_nested_control_cnt[nested_func_cnt] -= 1
-                func_control_list[nested_func_cnt].pop()
-                return check
-        func_nested_control_cnt[nested_func_cnt] -= 1
-        func_control_list[nested_func_cnt].pop()
+            if check[0] == 'End': return check
 
 
     # Visit a parse tree produced by CardParser#round_repeat_stmt.
@@ -1003,22 +985,17 @@ class CardVisitor(ParseTreeVisitor):
         
         assert loop_type == 'logic'
         assert nested_func_cnt >= 0
-        func_control_list[nested_func_cnt].append({})
-        func_nested_control_cnt[nested_func_cnt] += 1
         while value == 0:
-            idx = func_nested_control_cnt[nested_func_cnt]
-            func_control_list[nested_func_cnt][idx] = {}
+            func_control_list[nested_func_cnt].append({})
+            func_nested_control_cnt[nested_func_cnt] += 1
             check = self.visit(ctx.getChild(1))
-            if not isinstance(check, tuple): continue
-            if check is not None:
-                if check[0] == 'break': break
-                if check[0] == 'End':
-                    func_nested_control_cnt[nested_func_cnt] -= 1
-                    func_control_list[nested_func_cnt].pop()
-                    return check
+            func_nested_control_cnt[nested_func_cnt] -= 1
+            func_control_list[nested_func_cnt].pop()
+            
             _, value = self.visit(ctx.getChild(0))
-        func_nested_control_cnt[nested_func_cnt] -= 1
-        func_control_list[nested_func_cnt].pop()
+            if not isinstance(check, tuple): continue
+            if check[0] == 'break': break
+            if check[0] == 'End': return check
 
 
     # Visit a parse tree produced by CardParser#round_loop_if_stmt.
